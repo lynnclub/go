@@ -3,8 +3,9 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 var (
@@ -34,8 +35,10 @@ func Start(envKey, path string) {
 	Viper = viper.New()
 	Viper.SetConfigFile(file)
 	if err := Viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
+
+	Viper.WatchConfig()
 
 	fmt.Println("config start:", file)
 }
