@@ -1,0 +1,31 @@
+name: "dev"
+
+mysql:
+  default:
+    dsn: "root:123456@tcp(0.0.0.0:3306)/test?charset=utf8mb4"
+    max_open_conn: 100 #打开数据库连接的最大数量
+    max_idle_conn: 10 #空闲连接池的最大数量
+    log_level: 4 #Silent 1、Error 2、Warn 3、Info 4
+    slow_threshold: 1 #慢SQL阈值，单位秒
+
+db:
+  default:
+    dsn: "root:123456@tcp(0.0.0.0:3306)/test?charset=utf8mb4"
+    max_open_conn: 100 #打开连接的最大数量，默认100
+    max_idle_conn: 10 #空闲连接的最大数量，默认10
+    log_level: 4 #Silent 1、Error 2、Warn 3、Info 4，默认3
+    slow_threshold: 1 #慢SQL阈值，单位秒，默认1
+  postgres:
+    driver: "postgres" #驱动，mysql、postgres、sqlite、sqlserver、clickhouse，默认mysql
+    dsn: "host=localhost user=postgres password= dbname=test port=5432"
+    max_open_conn: 100 #打开连接的最大数量，默认100
+    max_idle_conn: 10 #空闲连接的最大数量，默认10
+    log_level: 4 #Silent 1、Error 2、Warn 3、Info 4，默认3
+    slow_threshold: 1 #慢SQL阈值，单位秒，默认1
+
+redis:
+  default:
+    address: "0.0.0.0:6379"
+    password: "" #密码，默认空
+    db: 0
+    pool_size: 100 #连接池最大数量，默认100

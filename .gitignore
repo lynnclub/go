@@ -1,0 +1,6 @@
+.DS_Store
+runtime.log
+.idea/*
+vendor/
+go.sum
+.idea
