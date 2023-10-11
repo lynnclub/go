@@ -1,4 +1,4 @@
-module config
+module github.com/lynnclub/go/v1/config
 
 go 1.19
 

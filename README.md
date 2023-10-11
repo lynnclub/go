@@ -55,6 +55,8 @@ golang、php、java等语言，语法特性各异、流行开源包多样、面�
 
 基于Viper v1.7.1封装，单例模式，仅支持一个配置文件，yaml格式。区分环境，优先读取自定义环境设置，为空时读取-m参数。
 
+默认环境为release。建议将默认环境设置为生产环境，以确保在任何情况下不出错，同时阻止开发测试环境连接生产环境的资源。
+
 ### 定义
 
 **Start(envKey, path)**
@@ -68,6 +70,9 @@ path：配置目录，比如 ./config。
 
 ```go
 import "github.com/lynnclub/go/v1/config"
+
+// 修改默认环境值
+config.Env="production"
 
 // 启动
 // 当MY_ENV=dev，读取./config/dev.yaml

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	Env   = "dev"      //环境 建议dev开发、qa测试、yc压测、prv预览、pro生产
+	Env   = "release"  //环境 建议dev开发、test测试、release生产
 	Viper *viper.Viper //配置
 )
 
@@ -19,17 +19,18 @@ func Start(envKey, path string) {
 		return
 	}
 
-	Env = os.Getenv(envKey)
-	if Env == "" {
+	env := os.Getenv(envKey)
+	if env == "" {
 		if flagMode := flag.Lookup("m"); flagMode == nil {
-			input := flag.String("m", "dev", "环境")
+			input := flag.String("m", Env, "环境")
 			flag.Parse()
-			Env = *input
+			env = *input
 		} else {
-			Env = flagMode.Value.String()
+			env = flagMode.Value.String()
 		}
 	}
 
+	Env = env
 	file := path + "/" + Env + ".yaml"
 
 	Viper = viper.New()
