@@ -2,13 +2,20 @@ package config
 
 import (
 	"os"
+	"path"
+	"runtime"
 	"testing"
 )
 
 // TestStart 启动
 func TestStart(t *testing.T) {
-	path, _ := os.Getwd()
-	Start("_TEST_MODE", path)
+	// 不在工作目录下运行，获取不到正确目录
+	// pathDir, _ := os.Getwd()
+
+	// 通用方式
+	_, file, _, _ := runtime.Caller(0)
+	pathDir := path.Dir(file)
+	Start("_TEST_MODE", pathDir)
 	env := Viper.GetString("name")
 	if env != "release" {
 		panic("config read error")
@@ -20,7 +27,7 @@ func TestStart(t *testing.T) {
 		panic(err.Error())
 	}
 
-	Start("_TEST_MODE", path)
+	Start("_TEST_MODE", pathDir)
 	env = Viper.GetString("name")
 	if env != "test" {
 		panic("config read error")
