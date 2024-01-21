@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -14,15 +15,15 @@ var (
 )
 
 type Option struct {
-	Address  string `json:"address"`   //地址
-	Password string `json:"password"`  //密码，默认空
-	DB       int    `json:"db"`        //db
-	PoolSize int    `json:"pool_size"` //连接池最大数量，默认100
+	Address  []string `json:"address"`   //地址，字符串数组
+	Password string   `json:"password"`  //密码，默认空
+	DB       int      `json:"db"`        //db
+	PoolSize int      `json:"pool_size"` //连接池最大数量，默认100
 }
 
 func Add(name string, option Option) {
-	if option.Address == "" {
-		panic("Option address empty " + name)
+	if len(option.Address) == 0 {
+		panic("Option address array empty " + name)
 	}
 
 	// 默认值
@@ -34,8 +35,13 @@ func Add(name string, option Option) {
 }
 
 func AddMap(name string, setting map[string]interface{}) {
+	address := setting["address"].([]interface{})
+	addressStrings := make([]string, len(address))
+	for i, v := range address {
+		addressStrings[i] = v.(string)
+	}
 	option := Option{
-		Address: setting["address"].(string),
+		Address: addressStrings,
 	}
 
 	if password, ok := setting["password"]; ok {
@@ -73,7 +79,7 @@ func Use(name string) *redis.Client {
 	}
 
 	pool[name] = redis.NewClient(&redis.Options{
-		Addr:     option.Address,
+		Addr:     option.Address[0],
 		DB:       option.DB,
 		Password: option.Password,
 		PoolSize: option.PoolSize,

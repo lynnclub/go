@@ -1,13 +1,5 @@
 name: "release"
 
-mysql:
-  default:
-    dsn: "root:123456@tcp(0.0.0.0:3306)/test?charset=utf8mb4"
-    max_open_conn: 100 #打开数据库连接的最大数量
-    max_idle_conn: 10 #空闲连接池的最大数量
-    log_level: 4 #Silent 1、Error 2、Warn 3、Info 4
-    slow_threshold: 1 #慢SQL阈值，单位秒
-
 db:
   default:
     dsn: "root:123456@tcp(0.0.0.0:3306)/test?charset=utf8mb4"
@@ -25,7 +17,14 @@ db:
 
 redis:
   default:
-    address: "0.0.0.0:6379"
+    address:
+      - "0.0.0.0:6379"
     password: "" #密码，默认空
     db: 0
+    pool_size: 100 #连接池最大数量，默认100
+  cluster:
+    address:
+      - "0.0.0.0:6379"
+      - "0.0.0.0:6380"
+    password: "" #密码，默认空
     pool_size: 100 #连接池最大数量，默认100

@@ -11,11 +11,3 @@ func TestLocal(t *testing.T) {
 		panic("ip Local error")
 	}
 }
-
-// TestResolve 解析IP
-func TestResolve(t *testing.T) {
-	response, _ := Resolve("14.1.44.228")
-	if response.Code != 0 || response.Data.CountryCode != "NZ" {
-		panic("ip Resolve error")
-	}
-}

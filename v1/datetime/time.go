@@ -5,8 +5,11 @@ import (
 	"time"
 )
 
+const LayoutTime = "15:04:05"
 const LayoutDate = "2006-01-02"
 const LayoutDateTime = "2006-01-02 15:04:05"
+const LayoutDateTimeZone = "2006-01-02 15:04:05 -0700 MST"
+const LayoutDateTimeZoneT = "2006-01-02T15:04:05.999999-07:00"
 
 // ParseDateTime 解析日期时间
 func ParseDateTime(datetime string, timezone string) time.Time {

@@ -1,8 +1,8 @@
 package response
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/lynnclub/go/v1/response/json_struct"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
 )

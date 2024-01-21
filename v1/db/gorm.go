@@ -1,6 +1,11 @@
 package db
 
 import (
+	"log"
+	"os"
+	"sync"
+	"time"
+
 	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -8,15 +13,12 @@ import (
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"os"
-	"time"
 )
 
 var (
-	pool    = make(map[string]*gorm.DB) //实例池
-	options = make(map[string]Option)   //配置池
-	Default *gorm.DB                    //默认数据库
+	pool    = &sync.Map{}             //实例池
+	options = make(map[string]Option) //配置池
+	Default *gorm.DB                  //默认数据库
 )
 
 type Option struct {
@@ -89,8 +91,8 @@ func Use(name string) *gorm.DB {
 		name = "default"
 	}
 
-	if instance, ok := pool[name]; ok {
-		return instance
+	if instance, ok := pool.Load(name); ok {
+		return instance.(*gorm.DB)
 	}
 
 	option, ok := options[name]
@@ -136,11 +138,10 @@ func Use(name string) *gorm.DB {
 	// 空闲连接的最大数量
 	sqlDB.SetMaxIdleConns(option.MaxIdleConn)
 
-	pool[name] = newGorm
-
 	if name == "default" {
-		Default = pool[name]
+		Default = newGorm
 	}
 
-	return pool[name]
+	pool.Store(name, newGorm)
+	return newGorm
 }
