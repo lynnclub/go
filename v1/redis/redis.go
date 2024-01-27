@@ -86,6 +86,11 @@ func Use(name string) *redis.Client {
 		PoolSize: option.PoolSize,
 	})
 
+	_, err := newClient.Ping(Ctx).Result()
+	if err != nil {
+		panic("Failed to connect " + name + " err: " + err.Error())
+	}
+
 	if name == "default" {
 		Default = newClient
 	}
