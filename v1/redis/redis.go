@@ -2,12 +2,13 @@ package redis
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-redis/redis/v8"
 )
 
 var (
-	pool    = make(map[string]*redis.Client)
+	pool    = &sync.Map{}             //实例池
 	options = make(map[string]Option) //配置池
 	Default *redis.Client
 	Ctx     = context.Background()
@@ -69,8 +70,8 @@ func Use(name string) *redis.Client {
 		name = "default"
 	}
 
-	if instance, ok := pool[name]; ok {
-		return instance
+	if instance, ok := pool.Load(name); ok {
+		return instance.(*redis.Client)
 	}
 
 	option, ok := options[name]
@@ -78,7 +79,7 @@ func Use(name string) *redis.Client {
 		panic("Option not found " + name)
 	}
 
-	pool[name] = redis.NewClient(&redis.Options{
+	newClient := redis.NewClient(&redis.Options{
 		Addr:     option.Address[0],
 		DB:       option.DB,
 		Password: option.Password,
@@ -86,8 +87,9 @@ func Use(name string) *redis.Client {
 	})
 
 	if name == "default" {
-		Default = pool[name]
+		Default = newClient
 	}
 
-	return pool[name]
+	pool.Store(name, newClient)
+	return newClient
 }

@@ -1,6 +1,8 @@
 package array
 
 import (
+	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -122,5 +124,169 @@ func TestIn(t *testing.T) {
 	}
 	if len(values) != 2 {
 		panic("values num error")
+	}
+}
+
+func TestSliceWithMutex_Add(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	slice.Add(42)
+
+	if len(slice.slice) != 1 || slice.slice[0] != 42 {
+		t.Errorf("Add method failed. Expected: [42], Got: %v", slice.slice)
+	}
+}
+
+func TestSliceWithMutex_Get(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	slice.Add(42)
+
+	result := slice.Get(0)
+
+	if result != 42 {
+		t.Errorf("Get method failed. Expected: 42, Got: %v", result)
+	}
+}
+
+func TestSliceWithMutex_All(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	slice.Add(42)
+	slice.Add(24)
+
+	result := slice.All()
+
+	expected := []int{42, 24}
+	if len(result) != len(expected) {
+		t.Errorf("All method failed. Length mismatch. Expected: %v, Got: %v", expected, result)
+	}
+
+	for i, v := range expected {
+		if result[i] != v {
+			t.Errorf("All method failed. Expected: %v, Got: %v", expected, result)
+			break
+		}
+	}
+}
+
+func TestSliceWithMutex_Pop(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	slice.Add(42)
+	slice.Add(24)
+
+	result := slice.Pop()
+
+	expected := []int{42, 24}
+	if len(result) != len(expected) {
+		t.Errorf("Pop method failed. Length mismatch. Expected: %v, Got: %v", expected, result)
+	}
+
+	if len(slice.slice) != 0 {
+		t.Errorf("Pop method failed. The underlying slice is not empty after Pop.")
+	}
+}
+
+func TestSliceWithMutex_ConcurrentAdd(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	var wg sync.WaitGroup
+	numGoroutines := 100
+
+	wg.Add(numGoroutines)
+	for i := 0; i < numGoroutines; i++ {
+		go func(value int) {
+			defer wg.Done()
+			slice.Add(value)
+		}(i)
+	}
+
+	wg.Wait()
+
+	if len(slice.slice) != numGoroutines {
+		t.Errorf("Concurrent Add method failed. Expected length: %d, Got: %d", numGoroutines, len(slice.slice))
+	}
+}
+
+func TestSliceWithMutex_ConcurrentGet(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	numElements := 100
+
+	for i := 0; i < numElements; i++ {
+		slice.Add(i)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(numElements)
+	for i := 0; i < numElements; i++ {
+		go func(index int) {
+			defer wg.Done()
+			result := slice.Get(index)
+			if result != index {
+				t.Errorf("Concurrent Get method failed. Expected: %d, Got: %v", index, result)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+func TestSliceWithMutex_ConcurrentAll(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	numElements := 100
+
+	// Populate the slice with elements
+	for i := 0; i < numElements; i++ {
+		slice.Add(i)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(numElements)
+	for i := 0; i < numElements; i++ {
+		go func() {
+			defer wg.Done()
+			result := slice.All()
+			// Validate the length of the result slice
+			if len(result) != numElements {
+				t.Errorf("Concurrent All method failed. Expected length: %d, Got: %d", numElements, len(result))
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestSliceWithMutex_ConcurrentPop(t *testing.T) {
+	slice := SliceWithMutex[int]{}
+	numElements := 100
+
+	// Populate the slice with elements
+	for i := 0; i < numElements; i++ {
+		slice.Add(i)
+	}
+
+	var counter int64
+
+	var wg sync.WaitGroup
+	wg.Add(numElements)
+	for i := 0; i < numElements; i++ {
+		go func() {
+			defer wg.Done()
+			result := slice.Pop()
+			// Validate the length of the result slice
+			if len(result) > 0 {
+				atomic.AddInt64(&counter, 1)
+				if len(result) != numElements {
+					t.Errorf("Concurrent Pop method failed. Expected length: %d, Got: %d", numElements, len(result))
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	if counter != 1 {
+		t.Errorf("Concurrent Pop method failed. Slice Pop not once. counter: %d", counter)
+	}
+
+	// After Pop, the underlying slice should be empty
+	if len(slice.slice) != 0 {
+		t.Errorf("Concurrent Pop method failed. The underlying slice is not empty after Pop.")
 	}
 }

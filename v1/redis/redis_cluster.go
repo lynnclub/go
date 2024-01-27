@@ -1,17 +1,19 @@
 package redis
 
 import (
+	"sync"
+
 	"github.com/go-redis/redis/v8"
 )
 
 var (
-	poolCluster = make(map[string]*redis.ClusterClient)
+	poolCluster = &sync.Map{} //实例池
 )
 
 // Cluster 使用集群
 func Cluster(name string) *redis.ClusterClient {
-	if instance, ok := poolCluster[name]; ok {
-		return instance
+	if instance, ok := poolCluster.Load(name); ok {
+		return instance.(*redis.ClusterClient)
 	}
 
 	option, ok := options[name]
@@ -19,11 +21,12 @@ func Cluster(name string) *redis.ClusterClient {
 		panic("Option not found " + name)
 	}
 
-	poolCluster[name] = redis.NewClusterClient(&redis.ClusterOptions{
+	newCluster := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:    option.Address,
 		Password: option.Password,
 		PoolSize: option.PoolSize,
 	})
 
-	return poolCluster[name]
+	poolCluster.Store(name, newCluster)
+	return newCluster
 }
