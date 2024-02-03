@@ -3,11 +3,12 @@ package feishu
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
+	"time"
+
 	"github.com/lynnclub/go/v1/bytedance/feishu/entity"
 	"github.com/lynnclub/go/v1/sign"
 	"github.com/parnurzeal/gorequest"
-	"strconv"
-	"time"
 )
 
 // GroupRobot 群机器人

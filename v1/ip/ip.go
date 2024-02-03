@@ -2,12 +2,13 @@ package ip
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Local 获取本地IP
-func Local(ipv4 bool) []string {
+func Local(ipv6 bool) []string {
 	var ips []string
 
 	address, err := net.InterfaceAddrs()
@@ -18,12 +19,16 @@ func Local(ipv4 bool) []string {
 
 	for _, addr := range address {
 		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipv4 {
-				// 获取IPv4
-				if ipNet.IP.To4() != nil {
-					ips = append(ips, ipNet.IP.String())
-				}
-			} else {
+			// 获取IPv4
+			if ipNet.IP.To4() != nil {
+				ips = append(ips, ipNet.IP.String())
+			}
+		}
+	}
+
+	if ipv6 {
+		for _, addr := range address {
+			if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
 				// 获取IPv6
 				if ipNet.IP.To16() != nil {
 					ips = append(ips, ipNet.IP.String())

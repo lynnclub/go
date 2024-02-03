@@ -2,9 +2,10 @@ package sign
 
 import (
 	"fmt"
-	"github.com/lynnclub/go/v1/algorithm"
 	"sort"
 	"strings"
+
+	"github.com/lynnclub/go/v1/algorithm"
 )
 
 // MD5 常规md5，get拼接

@@ -1,10 +1,11 @@
 package sign
 
 import (
-	"github.com/lynnclub/go/v1/algorithm"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/lynnclub/go/v1/algorithm"
 )
 
 var paramTest = map[string]interface{}{"test": "123"}

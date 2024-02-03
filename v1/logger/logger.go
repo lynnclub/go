@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -8,8 +9,11 @@ import (
 	"strings"
 
 	"github.com/lynnclub/go/v1/datetime"
+	"github.com/lynnclub/go/v1/elasticsearch"
 	"github.com/lynnclub/go/v1/encoding/json"
+	"github.com/lynnclub/go/v1/ip"
 	"github.com/lynnclub/go/v1/notice"
+	"github.com/lynnclub/go/v1/safe"
 )
 
 // 日志，实时告警
@@ -65,7 +69,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 	message = l.Raw.Prefix() + message
 	full := map[string]interface{}{
 		"message":    message,
-		"context":    v,
+		"context":    json.Encode(v),
 		"level":      level,
 		"level_name": levelFlags[level],
 		"env":        l.env,
@@ -78,6 +82,11 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		"ua":         "",
 		"referer":    "",
 		"ip":         "",
+	}
+
+	ips := ip.Local(true)
+	if len(ips) > 0 {
+		full["ip"] = ips[0]
 	}
 
 	if level > 2 {
@@ -97,15 +106,49 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 
 	// 自动告警
 	if level >= 2 && l.feishu != nil {
-		// Send 飞书群发送
-		content := map[string]interface{}{
-			"tag":  "text",
-			"text": json.Encode(full),
-		}
-		feiShuGroup.Send(message, content, l.feishu["user_id"])
+		safe.Catch(func() {
+			// Send 飞书群发送
+			content := map[string]interface{}{
+				"tag":  "text",
+				"text": l.formatText(full),
+			}
+			feiShuGroup.Send("", content, l.feishu["user_id"])
+		}, func(err any) {
+			println(err)
+		})
 	}
 
 	return json.Encode(full)
+}
+
+func (l *logger) formatText(full map[string]interface{}) string {
+	querys := []string{}
+	if trace, exists := full["trace"].(string); exists && trace != "" {
+		querys = append(querys, elasticsearch.GetKuery("trace", trace))
+	}
+	querys = append(querys, elasticsearch.GetKuery("message", full["message"].(string)))
+
+	return fmt.Sprintf(`环境：%s
+级别：%s
+时间：%s
+IP：%s
+追踪：%s
+入口：%s
+	
+%s
+
+%s
+
+如有问题请尽快处理 []~(￣▽￣)~*`,
+		full["env"],
+		full["level_name"],
+		full["datetime"],
+		full["ip"],
+		full["trace"],
+		full["command"],
+		full["message"],
+		elasticsearch.GetKibanaUrl(l.feishu["kibana_url"], l.feishu["es_index"], querys),
+	)
 }
 
 // SetLevel 等级
@@ -182,6 +225,11 @@ func Debug(message string, v ...interface{}) {
 // Info 信息
 func Info(message string, v ...interface{}) {
 	Logger.Info(message, v...)
+}
+
+// Notice 通知
+func Notice(message string, v ...interface{}) {
+	Logger.Notice(message, v...)
 }
 
 // Warn 警告

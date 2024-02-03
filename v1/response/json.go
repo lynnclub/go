@@ -1,10 +1,11 @@
 package response
 
 import (
-	"github.com/lynnclub/go/v1/response/json_struct"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/lynnclub/go/v1/response/json_struct"
 )
 
 // JsonStruct Json结构接口
