@@ -440,6 +440,10 @@ datetime 包主要围绕时区封装，将字符串时间、时间戳等形式�
 
 检查当前时间 0 未开始、1 正常、2 已结束，半闭合区间[start, end)，基于 CheckTime 封装
 
+**ClickhouseDatatimeRange() (time.Time, time.Time)**
+
+clickhouse datetime 类型底层以时间戳存储，不包含时区，时间范围 [1970-01-01 00:00:00, 2106-02-07 06:28:15]
+
 ### 实例
 
 ```go
