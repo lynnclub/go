@@ -71,3 +71,7 @@ func (s *single) CheckTime(timestamp int64, start string, end string) int {
 func (s *single) CheckTimeNow(start string, end string) int {
 	return CheckTimeNow(start, end, s.timezone)
 }
+
+func (s *single) ClickhouseDatatimeRange() (time.Time, time.Time) {
+	return ClickhouseDatatimeRange()
+}

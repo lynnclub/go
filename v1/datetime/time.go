@@ -180,3 +180,11 @@ func GetWeekDay(timezone string) (string, string) {
 
 	return time.Unix(start, 0).Format(LayoutDate), time.Unix(end, 0).Format(LayoutDate)
 }
+
+// clickhouse datetime类型底层以时间戳存储，不包含时区
+func ClickhouseDatatimeRange() (time.Time, time.Time) {
+	start, _ := time.Parse(LayoutDateTime, "1970-01-01 00:00:00")
+	end, _ := time.Parse(LayoutDateTime, "2105-12-31 23:59:59")
+
+	return start, end
+}
