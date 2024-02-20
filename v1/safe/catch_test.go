@@ -26,7 +26,7 @@ func TestGo(t *testing.T) {
 
 	Go(2, func() {
 		atomic.AddInt64(&goRun, 1)
-		fmt.Println(goRun)
+		fmt.Println("goRun", goRun)
 		simulated()
 	})
 
