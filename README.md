@@ -19,7 +19,7 @@ golang、php、java 等语言，语法特性各异、流行开源包多样、面
 | v1/sign             | 签名         | v1.0  | 签名方法集合。                           |
 | v1/ip               | IP           | v1.0  | 获取、解析。                             |
 | v1/encoding/json    | Json         | v1.0  | json。                                   |
-| v1/gosafe           | 安全运行协程 | v1.0  | 安全运行协程。                           |
+| v1/safe             | 安全运行协程 | v1.0  | 安全运行协程。                           |
 | v1/db               | 数据库       | v1.0  | 基于 gorm，支持多种数据库。              |
 | v1/redis            | Redis        | v1.0  | 基于 go-redis v8。                       |
 | v1/logger           | 日志         | v1.0  | 输出 json 日志，支持按级别发送通知。     |
