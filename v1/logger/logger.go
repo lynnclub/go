@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/lynnclub/go/v1/datetime"
@@ -90,18 +88,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 	}
 
 	if level > 2 {
-		pcs := make([]uintptr, 10)
-		deeps := runtime.Callers(callerDepth, pcs)
-
-		trace := make([]string, 0)
-		for deep := 0; deep < deeps; deep++ {
-			function := runtime.FuncForPC(pcs[deep])
-			file, line := function.FileLine(pcs[deep])
-			trace = append(trace, "["+strconv.Itoa(deep)+"] "+function.Name()+"()")
-			trace = append(trace, file+":"+strconv.Itoa(line))
-		}
-
-		full["extra"] = trace
+		full["extra"] = safe.Trace(10)
 	}
 
 	// 自动告警

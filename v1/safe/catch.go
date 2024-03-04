@@ -4,7 +4,23 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 )
+
+// Trace 执行链路
+func Trace(deeps int) []string {
+	pcs := make([]uintptr, deeps)
+
+	trace := make([]string, 0)
+	for deep := 0; deep < deeps; deep++ {
+		function := runtime.FuncForPC(pcs[deep])
+		file, line := function.FileLine(pcs[deep])
+		trace = append(trace, "["+strconv.Itoa(deep)+"] "+function.Name()+"()")
+		trace = append(trace, file+":"+strconv.Itoa(line))
+	}
+
+	return trace
+}
 
 // Catch 捕获错误
 func Catch(fn func(), onErr func(err any)) {
