@@ -129,7 +129,7 @@ func Use(name string) *gorm.DB {
 
 	newGorm, err := gorm.Open(dialect, &gorm.Config{Logger: gormLogger})
 	if err != nil {
-		panic("Failed to connect database " + option.DSN + " err: " + err.Error())
+		panic("Failed to connect database " + name + " err: " + err.Error())
 	}
 
 	sqlDB, _ := newGorm.DB()
