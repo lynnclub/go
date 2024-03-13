@@ -22,8 +22,8 @@ func Start(envKey, path string) {
 	}
 
 	var env string
-	if flagMode := flag.Lookup("m"); flagMode == nil {
-		input := flag.String("m", "", "环境")
+	if flagMode := flag.Lookup("e"); flagMode == nil {
+		input := flag.String("e", "", "环境")
 		flag.Parse()
 		env = *input
 	} else {
