@@ -21,18 +21,23 @@ func Start(envKey, path string) {
 		return
 	}
 
-	env := os.Getenv(envKey)
-	if env == "" {
-		if flagMode := flag.Lookup("m"); flagMode == nil {
-			input := flag.String("m", Env, "环境")
-			flag.Parse()
-			env = *input
-		} else {
-			env = flagMode.Value.String()
-		}
+	var env string
+	if flagMode := flag.Lookup("m"); flagMode == nil {
+		input := flag.String("m", "", "环境")
+		flag.Parse()
+		env = *input
+	} else {
+		env = flagMode.Value.String()
 	}
 
-	Env = env
+	if env == "" {
+		env = os.Getenv(envKey)
+	}
+
+	if env != "" {
+		Env = env
+	}
+
 	file := path + "/" + Env + ".yaml"
 	BasePath = filepath.Dir(path)
 
