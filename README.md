@@ -669,37 +669,37 @@ for {
 
 是否不存在
 
-**Chunk[T any](slice []T, chunkSize int) [][]T**
+**Chunk[T any](array []T, chunkSize int) [][]T**
 
 分组
 
-**ChunkMap[K comparable, V any](elements map[K]V, chunkSize int) []map[K]V**
+**ChunkMap[K comparable, V any](array map[K]V, chunkSize int) []map[K]V**
 
 Map 分组
 
-**Keys[K comparable](elements map[K]V) []K**
+**Keys[V comparable](array []V, find V) []int**
+
+获取切片的 key
+
+**KeysMap[K comparable](array map[K]V) []K**
 
 获取 Map 的 key
 
-**KeysFind[K comparable, V comparable](elements map[K]V, findValue V) []K**
+**KeysFind[K comparable, V comparable](array map[K]V, find V) []K**
 
 获取 Map 指定值的 key
 
-**KeysArray[V comparable](elements []V, findValue V) []int**
-
-获取数组的 key
-
-**Values[K comparable, V any](elements map[K]V) []V**
+**Values[K comparable, V any](array map[K]V) []V**
 
 获取 Map 的 value
 
-**Column[T any, N comparable, K comparable](input map[N]map[K]T, columnKey K) []T**
+**Column[T any, N comparable, K comparable](array map[N]map[K]T, columnKey K) []T**
 
 获取 Map 指定 column
 
 **Diff[T comparable](a []T, b ...[]T) []T**
 
-获取数组 a 中不存在于 b 的元素
+获取切片 a 中不存在于 b 的元素
 
 **ToLower(array []string) []string**
 

@@ -55,7 +55,7 @@ func TestIn(t *testing.T) {
 		panic("must in")
 	}
 
-	keysInt := KeysArray(testInt64, 342)
+	keysInt := Keys(testInt64, 342)
 	if NotIn(keysInt, 3) {
 		panic("key not in")
 	}
@@ -89,7 +89,7 @@ func TestIn(t *testing.T) {
 		panic("chunk map num error")
 	}
 
-	keys := Keys(testMap)
+	keys := KeysMap(testMap)
 	if NotIn(keys, "6") {
 		panic("key not in")
 	}
