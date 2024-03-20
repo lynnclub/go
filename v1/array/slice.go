@@ -71,6 +71,24 @@ func Diff[T comparable](a []T, b ...[]T) []T {
 	return diff
 }
 
+// Intersect 获取切片a、b的交集
+func Intersect[T comparable](a, b []T) []T {
+	set := make(map[T]bool)
+	var intersect []T
+
+	for _, val := range a {
+		set[val] = true
+	}
+
+	for _, val := range b {
+		if set[val] {
+			intersect = append(intersect, val)
+		}
+	}
+
+	return intersect
+}
+
 // ToLower 转小写
 func ToLower(array []string) []string {
 	newArray := make([]string, 0)

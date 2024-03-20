@@ -42,6 +42,14 @@ func TestIn(t *testing.T) {
 		panic("keys num error")
 	}
 
+	intersect := Intersect(arrayString, arrayDiff)
+	if NotIn(intersect, "测试") {
+		panic("must in")
+	}
+	if len(intersect) != 1 {
+		panic("keys num error")
+	}
+
 	testInt64 := []int64{
 		123,
 		342,

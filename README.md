@@ -701,6 +701,10 @@ Map 分组
 
 获取切片 a 中不存在于 b 的元素
 
+**Intersect[T comparable](a, b []T) []T**
+
+获取切片a、b的交集
+
 **ToLower(array []string) []string**
 
 转小写
