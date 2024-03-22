@@ -42,7 +42,11 @@ func TestIn(t *testing.T) {
 		panic("keys num error")
 	}
 
-	intersect := Intersect(arrayString, arrayDiff)
+	arrayIntersect := []string{
+		"测试",
+		"mon",
+	}
+	intersect := Intersect(arrayString, arrayDiff, arrayIntersect)
 	if NotIn(intersect, "测试") {
 		panic("must in")
 	}

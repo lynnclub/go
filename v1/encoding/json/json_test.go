@@ -25,6 +25,19 @@ func TestEncode(t *testing.T) {
 	}
 }
 
+// TestEncode Json编码
+func TestEncodeToByte(t *testing.T) {
+	result := EncodeToByte(map[string]interface{}{"adc": "123", "No": 1234})
+	if string(result) != jsonStrReverse {
+		panic("encoding json.Encode map error")
+	}
+
+	result = EncodeToByte(test{ABC: "123", No: 1234})
+	if string(result) != jsonStr {
+		panic("encoding json.Encode struct error")
+	}
+}
+
 // TestDecode Json解码
 func TestDecode(t *testing.T) {
 	var data interface{}

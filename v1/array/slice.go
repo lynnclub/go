@@ -72,16 +72,20 @@ func Diff[T comparable](a []T, b ...[]T) []T {
 }
 
 // Intersect 获取切片a、b的交集
-func Intersect[T comparable](a, b []T) []T {
-	set := make(map[T]bool)
-	var intersect []T
+func Intersect[T comparable](a []T, b ...[]T) []T {
+	all := append(b, a)
+	allCount := len(all)
 
-	for _, val := range a {
-		set[val] = true
+	intersectCount := make(map[T]int)
+	for _, slice := range all {
+		for _, val := range slice {
+			intersectCount[val]++
+		}
 	}
 
-	for _, val := range b {
-		if set[val] {
+	var intersect []T
+	for val, count := range intersectCount {
+		if count == allCount {
 			intersect = append(intersect, val)
 		}
 	}

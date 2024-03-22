@@ -555,6 +555,10 @@ group.Send("title", content, userId)
 
 Json 编码
 
+**EncodeToByte(v interface{}) []byte**
+
+Json 编码
+
 **Decode(str string, v interface{}) error**
 
 Json 解码
@@ -701,9 +705,9 @@ Map 分组
 
 获取切片 a 中不存在于 b 的元素
 
-**Intersect[T comparable](a, b []T) []T**
+**Intersect[T comparable](a []T, b ...[]T) []T**
 
-获取切片a、b的交集
+获取切片 a、b 的交集
 
 **ToLower(array []string) []string**
 
