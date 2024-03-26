@@ -9,7 +9,7 @@ type Pool[T any] struct {
 	Create func(key any) T
 }
 
-func (p *Pool[T]) Get(key string) T {
+func (p *Pool[T]) Get(key any) T {
 	if instance, ok := p.Pool.Load(key); ok {
 		return instance.(T)
 	}
