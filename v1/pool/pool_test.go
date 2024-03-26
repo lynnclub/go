@@ -10,12 +10,22 @@ type TestData struct {
 
 func TestPool(t *testing.T) {
 	myPool := Pool[TestData]{
-		Create: func(key any) TestData { return TestData{Value: 42} },
+		Create: func(key any) *TestData { return &TestData{Value: 42} },
+		Close: func(key, value any) bool {
+			value.(*TestData).Value = 0
+			return true
+		},
 	}
 
 	key := "testKey"
 	instance := myPool.Get(key)
 	if instance.Value != 42 {
+		t.Errorf("Expected Value: 42, Got: %d", instance.Value)
+	}
+
+	myPool.CloseAll()
+	instance = myPool.Get(key)
+	if instance.Value != 0 {
 		t.Errorf("Expected Value: 42, Got: %d", instance.Value)
 	}
 
