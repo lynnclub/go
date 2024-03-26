@@ -11,7 +11,7 @@ type TestData struct {
 
 func TestPool(t *testing.T) {
 	myPool := Pool[TestData]{
-		Pool:   sync.Map{},
+		Pool:   &sync.Map{},
 		Create: func(key string) TestData { return TestData{Value: 42} },
 	}
 
