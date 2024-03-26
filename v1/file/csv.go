@@ -10,7 +10,6 @@ func CSVWriter(filename string, headers ...string) *csv.Writer {
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
 
 	writer := csv.NewWriter(file)
 
