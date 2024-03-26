@@ -6,7 +6,7 @@ import (
 
 type Pool[T any] struct {
 	Pool   *sync.Map
-	Create func(key string) T
+	Create func(key any) T
 }
 
 func (p *Pool[T]) Get(key string) T {
