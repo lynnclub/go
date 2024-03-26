@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"sync"
 	"testing"
 )
 
@@ -11,7 +10,6 @@ type TestData struct {
 
 func TestPool(t *testing.T) {
 	myPool := Pool[TestData]{
-		Pool:   &sync.Map{},
 		Create: func(key any) TestData { return TestData{Value: 42} },
 	}
 
