@@ -2,6 +2,7 @@ package db
 
 import (
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/lynnclub/go/v1/config"
@@ -26,6 +27,23 @@ func TestGORM(t *testing.T) {
 	if err = db.Ping(); err != nil {
 		panic("GORM mysql error " + err.Error())
 	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer func() {
+				wg.Done()
+			}()
+
+			goDb := Use("")
+			goDb2 := Use("")
+			if *goDb != *goDb2 {
+				panic("GORM mysql not reuse")
+			}
+		}()
+	}
+	wg.Wait()
 
 	db, _ = Use("postgres").DB()
 	if err = db.Ping(); err != nil {
