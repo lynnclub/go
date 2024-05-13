@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -19,6 +20,23 @@ func TestGORM(t *testing.T) {
 
 	AddMapBatch(config.Viper.GetStringMap("db"))
 
+	var wg sync.WaitGroup
+	for loop := 0; loop < 10; loop++ {
+		wg.Add(1)
+		go func() {
+			defer func() {
+				wg.Done()
+			}()
+
+			goDB := Use("")
+			fmt.Printf("%p\n", goDB)
+			if goDB != Default {
+				panic("GORM mysql not reuse")
+			}
+		}()
+	}
+	wg.Wait()
+
 	db, _ := Use("").DB()
 	if err = db.Ping(); err != nil {
 		panic("GORM mysql error " + err.Error())
@@ -27,23 +45,6 @@ func TestGORM(t *testing.T) {
 	if err = db.Ping(); err != nil {
 		panic("GORM mysql error " + err.Error())
 	}
-
-	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer func() {
-				wg.Done()
-			}()
-
-			goDb := Use("")
-			goDb2 := Use("")
-			if *goDb != *goDb2 {
-				panic("GORM mysql not reuse")
-			}
-		}()
-	}
-	wg.Wait()
 
 	db, _ = Use("postgres").DB()
 	if err = db.Ping(); err != nil {

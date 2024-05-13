@@ -1,7 +1,9 @@
 package redis
 
 import (
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/lynnclub/go/v1/config"
@@ -16,6 +18,23 @@ func TestGoRedis(t *testing.T) {
 
 	config.Start("_TEST_MODE", "../config")
 	AddMapBatch(config.Viper.GetStringMap("redis"))
+
+	var wg sync.WaitGroup
+	for loop := 0; loop < 10; loop++ {
+		wg.Add(1)
+		go func() {
+			defer func() {
+				wg.Done()
+			}()
+
+			goDB := Use("")
+			fmt.Printf("%p\n", goDB)
+			if goDB != Default {
+				panic("redis not reuse")
+			}
+		}()
+	}
+	wg.Wait()
 
 	db := Use("")
 	if err = db.Ping(Ctx).Err(); err != nil {
