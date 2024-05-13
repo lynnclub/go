@@ -15,9 +15,11 @@ func Cluster(name string) *redis.ClusterClient {
 	if instance, ok := poolCluster.Load(name); ok {
 		return instance.(*redis.ClusterClient)
 	} else {
-		var mutex sync.Mutex
 		mutex.Lock()
 		defer mutex.Unlock()
+		if instance, ok = pool.Load(name); ok {
+			return instance.(*redis.ClusterClient)
+		}
 	}
 
 	option, ok := options[name]

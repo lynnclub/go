@@ -9,6 +9,7 @@ import (
 
 var (
 	pool    = &sync.Map{}             //实例池
+	mutex   sync.Mutex                //互斥锁
 	options = make(map[string]Option) //配置池
 	Default *redis.Client
 	Ctx     = context.Background()
@@ -73,9 +74,11 @@ func Use(name string) *redis.Client {
 	if instance, ok := pool.Load(name); ok {
 		return instance.(*redis.Client)
 	} else {
-		var mutex sync.Mutex
 		mutex.Lock()
 		defer mutex.Unlock()
+		if instance, ok = pool.Load(name); ok {
+			return instance.(*redis.Client)
+		}
 	}
 
 	option, ok := options[name]
