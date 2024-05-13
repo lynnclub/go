@@ -93,6 +93,10 @@ func Use(name string) *gorm.DB {
 
 	if instance, ok := pool.Load(name); ok {
 		return instance.(*gorm.DB)
+	} else {
+		var mutex sync.Mutex
+		mutex.Lock()
+		defer mutex.Unlock()
 	}
 
 	option, ok := options[name]

@@ -13,6 +13,10 @@ type Pool[T any] struct {
 func (p *Pool[T]) Get(key any) *T {
 	if instance, ok := p.Pool.Load(key); ok {
 		return instance.(*T)
+	} else {
+		var mutex sync.Mutex
+		mutex.Lock()
+		defer mutex.Unlock()
 	}
 
 	newInstance := p.Create(key)

@@ -72,6 +72,10 @@ func Use(name string) *redis.Client {
 
 	if instance, ok := pool.Load(name); ok {
 		return instance.(*redis.Client)
+	} else {
+		var mutex sync.Mutex
+		mutex.Lock()
+		defer mutex.Unlock()
 	}
 
 	option, ok := options[name]
