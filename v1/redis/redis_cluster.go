@@ -33,6 +33,11 @@ func Cluster(name string) *redis.ClusterClient {
 		PoolSize: option.PoolSize,
 	})
 
+	_, err := newCluster.Ping(Ctx).Result()
+	if err != nil {
+		panic("Failed to connect redis cluster " + name + " err: " + err.Error())
+	}
+
 	poolCluster.Store(name, newCluster)
 	return newCluster
 }
