@@ -1,4 +1,4 @@
-package mongo
+package mongodb
 
 import (
 	"context"
@@ -68,7 +68,7 @@ func Use(name string) *mongo.Client {
 
 	newClient, err := mongo.Connect(ctx, mongoOptions.Client().ApplyURI(option.DSN))
 	if err != nil {
-		panic("Failed to connect mongo " + name + " err: " + err.Error())
+		panic("Failed to connect mongodb " + name + " err: " + err.Error())
 	}
 
 	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
@@ -76,7 +76,7 @@ func Use(name string) *mongo.Client {
 
 	err = newClient.Ping(ctx, readpref.Primary())
 	if err != nil {
-		panic("Failed to connect mongo " + name + " err: " + err.Error())
+		panic("Failed to connect mongodb " + name + " err: " + err.Error())
 	}
 
 	if name == "default" {
