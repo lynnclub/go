@@ -11,5 +11,6 @@ func (a Sort) Less(i, j int) bool {
 	if !ok1 || !ok2 {
 		panic("SortArray contains non-structs or structs without an Id field")
 	}
+	
 	return item1.Id < item2.Id
 }

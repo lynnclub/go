@@ -112,3 +112,18 @@ func ToUpper(array []string) []string {
 
 	return newArray
 }
+
+// Unique 去重
+func Unique[T comparable](array []T) []T {
+	result := make([]T, 0)
+	seen := make(map[T]struct{})
+
+	for _, value := range array {
+		if _, ok := seen[value]; !ok {
+			result = append(result, value)
+			seen[value] = struct{}{}
+		}
+	}
+
+	return result
+}
