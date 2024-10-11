@@ -5,7 +5,10 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
+	"github.com/lynnclub/go/v1/algorithm"
 	"github.com/lynnclub/go/v1/datetime"
 	"github.com/lynnclub/go/v1/elasticsearch"
 	"github.com/lynnclub/go/v1/encoding/json"
@@ -22,6 +25,13 @@ type logger struct {
 	timezone   string            // 时区
 	timeFormat string            // 时间格式
 	feishu     map[string]string // 飞书通知配置
+	mu         sync.Mutex
+	lastHashs  []AlertHash
+}
+
+type AlertHash struct {
+	hash string
+	Time time.Time
 }
 
 var (
@@ -93,19 +103,46 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 
 	// 自动告警
 	if level >= 2 && l.feishu != nil {
-		safe.Catch(func() {
-			// Send 飞书群发送
-			content := map[string]interface{}{
-				"tag":  "text",
-				"text": l.formatText(full),
-			}
-			feiShuGroup.Send("", content, l.feishu["user_id"])
-		}, func(err any) {
-			println(err)
-		})
+		l.alert(full)
 	}
 
 	return json.Encode(full)
+}
+
+func (l *logger) alert(full map[string]interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	hash := AlertHash{
+		hash: algorithm.MD5(full["message"].(string)),
+		Time: time.Now(),
+	}
+
+	// 阻止重复报警
+	for _, item := range l.lastHashs {
+		if item.hash == hash.hash {
+			if item.Time.Add(10 * time.Minute).After(hash.Time) {
+				return
+			}
+		}
+	}
+
+	// 如果超过最大容量，移除最老的
+	l.lastHashs = append(l.lastHashs, hash)
+	if len(l.lastHashs) > 10 {
+		l.lastHashs = l.lastHashs[1:]
+	}
+
+	safe.Catch(func() {
+		// Send 飞书群发送
+		content := map[string]interface{}{
+			"tag":  "text",
+			"text": l.formatText(full),
+		}
+		feiShuGroup.Send("", content, l.feishu["user_id"])
+	}, func(err any) {
+		println(err)
+	})
 }
 
 func (l *logger) formatText(full map[string]interface{}) string {
