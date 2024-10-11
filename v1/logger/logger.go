@@ -35,7 +35,6 @@ type AlertHash struct {
 }
 
 var (
-	callerDepth = 3
 	levelFlags  = []string{"DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "FATAL", "PANIC"}
 	Logger      = New(log.New(os.Stderr, "", log.Lmsgprefix), DEBUG, "local", "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
 	feiShuGroup *notice.FeiShuGroup
