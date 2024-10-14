@@ -113,7 +113,7 @@ func (l *logger) alert(full map[string]interface{}) {
 	defer l.mu.Unlock()
 
 	hash := AlertHash{
-		hash: algorithm.MD5(full["message"].(string)),
+		hash: algorithm.MD5(full["command"].(string) + full["message"].(string)),
 		Time: time.Now(),
 	}
 
