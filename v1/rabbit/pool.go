@@ -1,8 +1,10 @@
 package rabbit
 
 import (
+	"fmt"
 	"sync"
 
+	"github.com/lynnclub/go/v1/logger"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -65,4 +67,31 @@ func Use(name string) *rabbitmq.Conn {
 
 	pool.Store(name, conn)
 	return conn
+}
+
+func NewPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) *rabbitmq.Publisher {
+	publisher, err := rabbitmq.NewPublisher(Use(name), optionFuncs...)
+	if err == nil {
+		publisher.NotifyReturn(func(r rabbitmq.Return) {
+			fmt.Println("rabbitmq message returned from server: " + string(r.Body))
+			logger.Error("rabbitmq message returned from server: " + string(r.Body))
+		})
+
+		publisher.NotifyPublish(func(c rabbitmq.Confirmation) {
+			fmt.Println("rabbitmq publish", c.DeliveryTag)
+		})
+	} else {
+		panic("Failed to new rabbitmq publisher " + name + " err: " + err.Error())
+	}
+
+	return publisher
+}
+
+func NewConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.ConsumerOptions)) *rabbitmq.Consumer {
+	consumer, err := rabbitmq.NewConsumer(Use(name), queue, optionFuncs...)
+	if err != nil {
+		panic("Failed to new rabbitmq publisher " + name + " err: " + err.Error())
+	}
+
+	return consumer
 }
