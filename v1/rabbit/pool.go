@@ -71,7 +71,7 @@ func Use(name string) *rabbitmq.Conn {
 	return conn
 }
 
-func NewPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) *rabbitmq.Publisher {
+func GetPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) *rabbitmq.Publisher {
 	if instance, ok := poolPublisher.Load(name); ok {
 		return instance.(*rabbitmq.Publisher)
 	} else {
@@ -100,7 +100,7 @@ func NewPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) 
 	return publisher
 }
 
-func NewConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.ConsumerOptions)) *rabbitmq.Consumer {
+func GetConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.ConsumerOptions)) *rabbitmq.Consumer {
 	if instance, ok := poolConsumer.Load(name); ok {
 		return instance.(*rabbitmq.Consumer)
 	} else {
