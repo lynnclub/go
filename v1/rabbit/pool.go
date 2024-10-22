@@ -9,9 +9,11 @@ import (
 )
 
 var (
-	pool    = &sync.Map{}             //实例池
-	mutex   sync.Mutex                //互斥锁
-	options = make(map[string]Option) //配置池
+	pool          = &sync.Map{}             //实例池
+	poolPublisher = &sync.Map{}             //实例池
+	poolConsumer  = &sync.Map{}             //实例池
+	mutex         sync.Mutex                //互斥锁
+	options       = make(map[string]Option) //配置池
 )
 
 type Option struct {
@@ -70,6 +72,16 @@ func Use(name string) *rabbitmq.Conn {
 }
 
 func NewPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) *rabbitmq.Publisher {
+	if instance, ok := poolPublisher.Load(name); ok {
+		return instance.(*rabbitmq.Publisher)
+	} else {
+		mutex.Lock()
+		defer mutex.Unlock()
+		if instance, ok = poolPublisher.Load(name); ok {
+			return instance.(*rabbitmq.Publisher)
+		}
+	}
+
 	publisher, err := rabbitmq.NewPublisher(Use(name), optionFuncs...)
 	if err == nil {
 		publisher.NotifyReturn(func(r rabbitmq.Return) {
@@ -84,14 +96,26 @@ func NewPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) 
 		panic("Failed to new rabbitmq publisher " + name + " err: " + err.Error())
 	}
 
+	poolPublisher.Store(name, publisher)
 	return publisher
 }
 
 func NewConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.ConsumerOptions)) *rabbitmq.Consumer {
+	if instance, ok := poolConsumer.Load(name); ok {
+		return instance.(*rabbitmq.Consumer)
+	} else {
+		mutex.Lock()
+		defer mutex.Unlock()
+		if instance, ok = poolConsumer.Load(name); ok {
+			return instance.(*rabbitmq.Consumer)
+		}
+	}
+
 	consumer, err := rabbitmq.NewConsumer(Use(name), queue, optionFuncs...)
 	if err != nil {
 		panic("Failed to new rabbitmq publisher " + name + " err: " + err.Error())
 	}
 
+	poolConsumer.Store(name, consumer)
 	return consumer
 }
