@@ -10,8 +10,10 @@ import (
 	"github.com/lynnclub/go/v1/safe"
 )
 
+// todo::支持多组配置，按command、path切换
+
 var (
-	lastHashs   []lastHash // 记录报警摘要
+	lastHashs   []lastHash // 报警摘要
 	alertMutex  sync.Mutex
 	feiShuGroup *FeiShuGroup
 )
