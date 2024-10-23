@@ -9,11 +9,13 @@ import (
 )
 
 var (
-	pool          = &sync.Map{}             //实例池
-	poolPublisher = &sync.Map{}             //实例池
-	poolConsumer  = &sync.Map{}             //实例池
-	mutex         sync.Mutex                //互斥锁
-	options       = make(map[string]Option) //配置池
+	pool           = &sync.Map{}             //实例池
+	poolPublisher  = &sync.Map{}             //实例池
+	poolConsumer   = &sync.Map{}             //实例池
+	mutex          sync.Mutex                //互斥锁
+	mutexPublisher sync.Mutex                //互斥锁
+	mutexConsumer  sync.Mutex                //互斥锁
+	options        = make(map[string]Option) //配置池
 )
 
 type Option struct {
@@ -75,8 +77,8 @@ func GetPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) 
 	if instance, ok := poolPublisher.Load(name); ok {
 		return instance.(*rabbitmq.Publisher)
 	} else {
-		mutex.Lock()
-		defer mutex.Unlock()
+		mutexPublisher.Lock()
+		defer mutexPublisher.Unlock()
 		if instance, ok = poolPublisher.Load(name); ok {
 			return instance.(*rabbitmq.Publisher)
 		}
@@ -104,8 +106,8 @@ func GetConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.Consum
 	if instance, ok := poolConsumer.Load(name); ok {
 		return instance.(*rabbitmq.Consumer)
 	} else {
-		mutex.Lock()
-		defer mutex.Unlock()
+		mutexConsumer.Lock()
+		defer mutexConsumer.Unlock()
 		if instance, ok = poolConsumer.Load(name); ok {
 			return instance.(*rabbitmq.Consumer)
 		}
