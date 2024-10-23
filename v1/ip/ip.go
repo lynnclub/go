@@ -41,6 +41,7 @@ func Local(ipv6 bool) []string {
 }
 
 // GetClientIP 获取Header client-ip 的内容
+// todo::不依赖gin，使用http.Request
 func GetClientIP(c *gin.Context) (string, error) {
 	ip := c.Request.Header.Get("client-ip")
 	netIp := net.ParseIP(ip)
