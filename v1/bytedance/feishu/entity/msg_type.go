@@ -1,6 +1,6 @@
 package entity
 
-// 文档：https://www.feishu.cn/hc/zh-CN/articles/360024984973#lineguid-CdVcCt
+// https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot
 
 // MsgTypeText 文本消息
 type MsgTypeText struct {

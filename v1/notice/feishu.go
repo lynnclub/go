@@ -1,44 +1,121 @@
 package notice
 
 import (
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/lynnclub/go/v1/algorithm"
 	"github.com/lynnclub/go/v1/bytedance/feishu"
-	"github.com/lynnclub/go/v1/bytedance/feishu/entity"
+	"github.com/lynnclub/go/v1/elasticsearch"
+	"github.com/lynnclub/go/v1/safe"
 )
 
-type FeiShuGroup struct {
-	Webhook string //接口地址
-	SignKey string //签名KEY
-	Env     string //环境
-	robot   *feishu.GroupRobot
-}
+// todo::支持多组配置，按command、path切换
 
-// NewFeiShuGroup 飞书群实例化
-func NewFeiShuGroup(webhook, signKey, env string) *FeiShuGroup {
-	return &FeiShuGroup{
-		Webhook: webhook,
-		SignKey: signKey,
-		Env:     env,
-		robot:   feishu.NewGroupRobot(webhook, signKey),
+type FeishuAlert struct {
+	lastHashs []lastHash // 摘要
+	mutex     sync.Mutex
+	robot     *feishu.GroupRobot
+	settings  map[string]struct {
+		webhook   string
+		signKey   string
+		userId    string
+		kibanaUrl string
+		esIndex   string
 	}
 }
 
-// Send 飞书群发送
-func (group *FeiShuGroup) Send(title string, content map[string]interface{}, userId string) {
-	var data entity.PostData
-	data.Title = group.Env + title
+type lastHash struct {
+	hash string
+	time time.Time
+}
 
-	// 艾特用户
-	if userId == "" {
-		data.Content = [][]map[string]interface{}{{content}}
+func (f *FeishuAlert) find(entry string) string {
+	for name := range f.settings {
+		if strings.Contains(entry, name) {
+			return name
+		}
+	}
+
+	return "default"
+}
+
+func (f *FeishuAlert) Send(log map[string]interface{}) {
+	if log["level"].(int) < 2 {
+		return
+	}
+
+	name := ""
+	if log["url"].(string) == "" {
+		name = f.find(log["command"].(string))
 	} else {
-		data.Content = [][]map[string]interface{}{{content, map[string]interface{}{
-			"tag":     "at",
-			"user_id": userId,
-		}}}
+		name = f.find(log["url"].(string))
 	}
 
-	var richText entity.MsgTypePost
-	richText.Post = map[string]entity.PostData{"zh_cn": data}
+	newHash := lastHash{
+		hash: algorithm.MD5(log["command"].(string) + log["message"].(string)),
+		time: time.Now(),
+	}
 
-	_, _ = group.robot.Send(richText)
+	for _, lastHash := range f.lastHashs {
+		if lastHash.hash == newHash.hash {
+			if lastHash.time.Add(10 * time.Minute).After(newHash.time) {
+				return
+			}
+		}
+	}
+
+	f.mutex.Lock()
+
+	f.lastHashs = append(f.lastHashs, newHash)
+	if len(f.lastHashs) > 10 {
+		f.lastHashs = f.lastHashs[1:]
+	}
+
+	f.mutex.Unlock()
+
+	safe.Catch(func() {
+		content := map[string]interface{}{
+			"tag":  "text",
+			"text": f.Format(log, f.settings[name].kibanaUrl, f.settings[name].esIndex),
+		}
+		feishu.NewGroupRobot(f.settings[name].webhook, f.settings[name].signKey).
+			SendRich("", content, f.settings[name].userId)
+	}, func(err any) {
+		println(err)
+	})
+}
+
+func (f *FeishuAlert) Format(log map[string]interface{}, kibanaUrl, esIndex string) string {
+	querys := []string{
+		elasticsearch.GetKuery("message", log["message"].(string)),
+	}
+
+	if trace := log["trace"].(string); trace != "" {
+		querys = append(querys, elasticsearch.GetKuery("trace", trace))
+	}
+
+	return fmt.Sprintf(`环境：%s
+级别：%s
+时间：%s
+IP：%s
+追踪：%s
+入口：%s
+	
+%s
+
+%s
+
+如有问题请尽快处理 []~(￣▽￣)~*`,
+		log["env"],
+		log["level_name"],
+		log["datetime"],
+		log["ip"],
+		log["trace"],
+		log["command"],
+		log["message"],
+		elasticsearch.GetKibanaUrl(kibanaUrl, esIndex, querys),
+	)
 }

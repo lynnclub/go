@@ -93,3 +93,23 @@ func (robot *GroupRobot) Send(request interface{}) (entity.GroupRobotResponse, e
 
 	return response, nil
 }
+
+func (robot *GroupRobot) SendRich(title string, content map[string]interface{}, userId string) {
+	var data entity.PostData
+	data.Title = title
+
+	// 艾特用户
+	if userId == "" {
+		data.Content = [][]map[string]interface{}{{content}}
+	} else {
+		data.Content = [][]map[string]interface{}{{content, map[string]interface{}{
+			"tag":     "at",
+			"user_id": userId,
+		}}}
+	}
+
+	var richText entity.MsgTypePost
+	richText.Post = map[string]entity.PostData{"zh_cn": data}
+
+	_, _ = robot.Send(richText)
+}
