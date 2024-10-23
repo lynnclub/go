@@ -1,4 +1,4 @@
-package logger
+package notice
 
 import (
 	"fmt"
@@ -7,14 +7,13 @@ import (
 
 	"github.com/lynnclub/go/v1/algorithm"
 	"github.com/lynnclub/go/v1/elasticsearch"
-	"github.com/lynnclub/go/v1/notice"
 	"github.com/lynnclub/go/v1/safe"
 )
 
 var (
 	lastHashs   []lastHash // 记录报警摘要
 	alertMutex  sync.Mutex
-	feiShuGroup *notice.FeiShuGroup
+	feiShuGroup *FeiShuGroup
 )
 
 type lastHash struct {
@@ -22,7 +21,7 @@ type lastHash struct {
 	time time.Time
 }
 
-func (l *logger) alert(full map[string]interface{}) {
+func FeishuAlert(full map[string]interface{}) {
 	alertMutex.Lock()
 	defer alertMutex.Unlock()
 
@@ -48,7 +47,7 @@ func (l *logger) alert(full map[string]interface{}) {
 
 	safe.Catch(func() {
 		if feiShuGroup == nil {
-			feiShuGroup = notice.NewFeiShuGroup(
+			feiShuGroup = NewFeiShuGroup(
 				l.feishu["webhook"],
 				l.feishu["sign_key"],
 				"",
@@ -57,7 +56,7 @@ func (l *logger) alert(full map[string]interface{}) {
 
 		content := map[string]interface{}{
 			"tag":  "text",
-			"text": l.formatText(full),
+			"text": FeishuAlertFormat(full),
 		}
 		feiShuGroup.Send("", content, l.feishu["user_id"])
 	}, func(err any) {
@@ -65,7 +64,7 @@ func (l *logger) alert(full map[string]interface{}) {
 	})
 }
 
-func (l *logger) formatText(full map[string]interface{}) string {
+func FeishuAlertFormat(full map[string]interface{}) string {
 	querys := []string{
 		elasticsearch.GetKuery("message", full["message"].(string)),
 	}

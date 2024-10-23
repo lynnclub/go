@@ -28,24 +28,24 @@ const (
 )
 
 type logger struct {
-	Raw        *log.Logger       // 原生log
-	env        string            // 环境
-	level      int               // 起始级别
-	trace      string            // 追踪标识，traceId/userId/orderId等
-	timezone   string            // 时区
-	timeFormat string            // 时间格式
-	request    *http.Request     // 请求
-	feishu     map[string]string // 飞书通知配置，todo::改成callback
+	Raw        *log.Logger                      // 原生log
+	env        string                           // 环境
+	level      int                              // 起始级别
+	trace      string                           // 追踪标识，traceId/userId/orderId等
+	timezone   string                           // 时区
+	timeFormat string                           // 时间格式
+	request    *http.Request                    // 请求
+	callback   func(log map[string]interface{}) // 回调
 }
 
-func New(raw *log.Logger, level int, env string, timezone, timeFormat string, feishu map[string]string) *logger {
+func New(raw *log.Logger, level int, env string, timezone, timeFormat string, callback func(log map[string]interface{})) *logger {
 	return &logger{
 		Raw:        raw,
 		env:        env,
 		level:      level,
 		timezone:   timezone,
 		timeFormat: timeFormat,
-		feishu:     feishu,
+		callback:   callback,
 	}
 }
 
@@ -171,7 +171,6 @@ func Panic(message string, v ...interface{}) {
 }
 
 func (l *logger) preprocessing(message string, level int, v ...interface{}) string {
-	message = l.Raw.Prefix() + message
 	full := map[string]interface{}{
 		"datetime":   datetime.Any(l.timezone, l.timeFormat),
 		"env":        l.env,
@@ -181,7 +180,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		"trace":      l.trace,
 		"ip":         "",
 		"command":    strings.Join(os.Args, " "),
-		"message":    message,
+		"message":    l.Raw.Prefix() + message,
 		"context":    json.Encode(v),
 		"method":     "",
 		"url":        "",
@@ -206,9 +205,8 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		// todo:: client_ip
 	}
 
-	// 实时告警
-	if level >= 2 && l.feishu != nil {
-		l.alert(full)
+	if l.callback != nil {
+		l.callback(full)
 	}
 
 	return json.Encode(full)
