@@ -57,14 +57,14 @@ func (f *FeishuAlert) AddMapBatch(batch map[string]interface{}) {
 	}
 }
 
-func (f *FeishuAlert) FindOption(entry string) string {
+func (f *FeishuAlert) FindOption(entry, defaultName string) string {
 	for name := range f.options {
 		if strings.Contains(entry, name) {
 			return name
 		}
 	}
 
-	return "default"
+	return defaultName
 }
 
 func (f *FeishuAlert) Send(log map[string]interface{}) {
@@ -74,9 +74,9 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 
 	name := ""
 	if log["url"].(string) == "" {
-		name = f.FindOption(log["command"].(string))
+		name = f.FindOption(log["command"].(string), "default_command")
 	} else {
-		name = f.FindOption(log["url"].(string))
+		name = f.FindOption(log["url"].(string), "default_api")
 	}
 
 	option, ok := f.options[name]
