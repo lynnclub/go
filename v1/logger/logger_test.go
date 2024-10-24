@@ -13,8 +13,8 @@ import (
 func TestLog(t *testing.T) {
 	Logger = New(
 		log.New(os.Stderr, "", log.Lmsgprefix),
-		INFO,
 		"local",
+		INFO,
 		"asia/shanghai",
 		datetime.LayoutDateTimeZoneT,
 		nil,
@@ -31,8 +31,8 @@ func TestLog(t *testing.T) {
 	}
 	Logger = New(
 		log.New(lumberjack, "", log.Lmsgprefix),
-		INFO,
 		"local",
+		INFO,
 		"asia/shanghai",
 		datetime.LayoutDateTimeZoneT,
 		nil,

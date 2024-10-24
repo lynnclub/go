@@ -14,7 +14,7 @@ import (
 
 var (
 	levelFlags = []string{"DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "FATAL", "PANIC"}
-	Logger     = New(log.New(os.Stderr, "", log.Lmsgprefix), DEBUG, "local", "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
+	Logger     = New(log.New(os.Stderr, "", log.Lmsgprefix), "local", DEBUG, "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
 )
 
 const (
