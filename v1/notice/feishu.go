@@ -47,8 +47,10 @@ func (f *FeishuAlert) Add(name string, option Option) {
 
 func (f *FeishuAlert) AddMap(name string, setting map[string]interface{}) {
 	levels := []string{}
-	for _, level := range setting["levels"].([]string) {
-		levels = append(levels, strings.ToUpper(level))
+	if tmps, ok := setting["levels"].([]string); ok {
+		for _, level := range tmps {
+			levels = append(levels, strings.ToUpper(level))
+		}
 	}
 
 	option := Option{
@@ -71,7 +73,7 @@ func (f *FeishuAlert) AddMapBatch(batch map[string]interface{}) {
 
 func (f *FeishuAlert) FindOption(level string, entry, defaultName string) string {
 	for name, option := range f.options {
-		if array.In(option.Levels, level) && strings.Contains(entry, name) {
+		if (len(option.Levels) == 0 || array.In(option.Levels, level)) && strings.Contains(entry, name) {
 			return name
 		}
 	}
