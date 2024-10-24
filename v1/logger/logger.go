@@ -38,7 +38,7 @@ type logger struct {
 	callback   func(log map[string]interface{}) // 回调
 }
 
-func New(raw *log.Logger, level int, env string, timezone, timeFormat string, callback func(log map[string]interface{})) *logger {
+func New(raw *log.Logger, env string, level int, timezone, timeFormat string, callback func(log map[string]interface{})) *logger {
 	return &logger{
 		Raw:        raw,
 		env:        env,
