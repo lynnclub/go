@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lynnclub/go/v1/algorithm"
+	"github.com/lynnclub/go/v1/array"
 	"github.com/lynnclub/go/v1/bytedance/feishu"
 	"github.com/lynnclub/go/v1/elasticsearch"
 	"github.com/lynnclub/go/v1/safe"
@@ -24,11 +25,12 @@ type lastHash struct {
 }
 
 type Option struct {
-	Webhook   string `json:"webhook"`
-	SignKey   string `json:"sign_key"`
-	UserId    string `json:"user_id"`
-	KibanaUrl string `json:"kibana_url"`
-	EsIndex   string `json:"es_index"`
+	Levels    []string `json:"levels"`
+	Webhook   string   `json:"webhook"`
+	SignKey   string   `json:"sign_key"`
+	UserId    string   `json:"user_id"`
+	KibanaUrl string   `json:"kibana_url"`
+	EsIndex   string   `json:"es_index"`
 }
 
 func (f *FeishuAlert) Add(name string, option Option) {
@@ -44,7 +46,13 @@ func (f *FeishuAlert) Add(name string, option Option) {
 }
 
 func (f *FeishuAlert) AddMap(name string, setting map[string]interface{}) {
+	levels := []string{}
+	for _, level := range setting["levels"].([]string) {
+		levels = append(levels, strings.ToUpper(level))
+	}
+
 	option := Option{
+		Levels:    levels,
 		Webhook:   setting["webhook"].(string),
 		SignKey:   setting["sign_key"].(string),
 		UserId:    setting["user_id"].(string),
@@ -61,9 +69,9 @@ func (f *FeishuAlert) AddMapBatch(batch map[string]interface{}) {
 	}
 }
 
-func (f *FeishuAlert) FindOption(entry, defaultName string) string {
-	for name := range f.options {
-		if strings.Contains(entry, name) {
+func (f *FeishuAlert) FindOption(level string, entry, defaultName string) string {
+	for name, option := range f.options {
+		if array.In(option.Levels, level) && strings.Contains(entry, name) {
 			return name
 		}
 	}
@@ -78,9 +86,9 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 
 	name := ""
 	if log["url"].(string) == "" {
-		name = f.FindOption(log["command"].(string), "default_command")
+		name = f.FindOption(log["level_name"].(string), log["command"].(string), "default_command")
 	} else {
-		name = f.FindOption(log["url"].(string), "default_api")
+		name = f.FindOption(log["level_name"].(string), log["url"].(string), "default_api")
 	}
 
 	option, ok := f.options[name]
