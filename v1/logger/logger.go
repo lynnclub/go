@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	levelFlags = []string{"DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "FATAL", "PANIC"}
+	levelFlags = []string{"DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "PANIC", "FATAL"}
 	Logger     = New(log.New(os.Stderr, "", log.Lmsgprefix), "local", DEBUG, "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
 )
 
@@ -23,8 +23,8 @@ const (
 	NOTICE
 	WARN
 	ERROR
-	FATAL
 	PANIC
+	FATAL
 )
 
 type logger struct {
@@ -104,20 +104,20 @@ func (l *logger) Error(message string, v ...interface{}) {
 	l.Raw.Println(l.preprocessing(message, ERROR, v...))
 }
 
-// Fatal 致命错误
-func (l *logger) Fatal(message string, v ...interface{}) {
-	if l.level > FATAL {
-		return
-	}
-	l.Raw.Fatalln(l.preprocessing(message, FATAL, v...))
-}
-
 // Panic 恐慌
 func (l *logger) Panic(message string, v ...interface{}) {
 	if l.level > PANIC {
 		return
 	}
 	l.Raw.Panicln(l.preprocessing(message, PANIC, v...))
+}
+
+// Fatal 致命错误
+func (l *logger) Fatal(message string, v ...interface{}) {
+	if l.level > FATAL {
+		return
+	}
+	l.Raw.Fatalln(l.preprocessing(message, FATAL, v...))
 }
 
 // SetLevel 起始等级
@@ -160,14 +160,14 @@ func Error(message string, v ...interface{}) {
 	Logger.Error(message, v...)
 }
 
-// Fatal 致命错误
-func Fatal(message string, v ...interface{}) {
-	Logger.Fatal(message, v...)
-}
-
 // Panic 恐慌
 func Panic(message string, v ...interface{}) {
 	Logger.Panic(message, v...)
+}
+
+// Fatal 致命错误
+func Fatal(message string, v ...interface{}) {
+	Logger.Fatal(message, v...)
 }
 
 func (l *logger) preprocessing(message string, level int, v ...interface{}) string {

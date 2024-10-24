@@ -243,38 +243,48 @@ if err = maxMin.SetMax(newMaxId); err == nil {
 
 设置等级，小于该等级的日志将过滤。
 
-**SetPrefix(prefix string)**
+**SetTrace(trace string)**
 
-设置前缀，拼接在 title 字段之前。
+设置追踪，traceId/userId/orderId等。
 
 **Debug(v ...interface{})**  
 **Info(v ...interface{})**  
+**Notice(v ...interface{})**  
 **Warn(v ...interface{})**  
 **Error(v ...interface{})**  
 **Panic(v ...interface{})**  
-**Fatal(v ...interface{})**
+**Fatal(v ...interface{})**  
 
 调试、信息、警告、错误、恐慌、致命错误
 
 ### 实例
 
 ```yaml
-# yaml配置-飞书通知
-feishu:
-  group:
-    alert:
-      env: "dev"
+# yaml配置-飞书告警
+alert:
+  feishu:
+    default_api:
       webhook: "https://open.feishu.cn/xxx"
       sign_key: ""
       user_id: ""
+    alert_xxx:
+      webhook: "https://open.feishu.cn/xxx"
+      sign_key: ""
+      user_id: ""
+      levels:
+        - "NOTICE"
 ```
 
 ```go
+import "github.com/lynnclub/go/v1/notice"
 import "github.com/lynnclub/go/v1/logger"
 import "github.com/lynnclub/go/v1/datetime"
 import "gopkg.in/natefinch/lumberjack.v2"
 
 // 自定义启动
+// 告警
+alert := notice.FeishuAlert{}
+alert.AddMapBatch(config.Viper.GetStringMap("alert.feishu"))
 // 默认为 New(log.New(os.Stderr, "", log.Lmsgprefix), DEBUG, "local", "asia/shanghai", nil)
 lumberjack := &lumberjack.Logger{
 	Filename:   "foo.log",
@@ -285,11 +295,13 @@ lumberjack := &lumberjack.Logger{
 }
 logger.Logger = logger.New(
   log.New(lumberjack, "", log.Lmsgprefix),
-  logger.DEBUG,
   "local",
+  logger.DEBUG,
   "asia/shanghai",
   datetime.LayoutDateTimeZoneT,
-  config.Viper.GetStringMapString("feishu.group.alert"),
+  func(log map[string]interface{}) {
+		alert.Send(log)
+	},
 )
 
 // 记日志
