@@ -12,19 +12,16 @@ import (
 	"github.com/lynnclub/go/v1/safe"
 )
 
-// todo::支持多组配置，按command、path切换
-
 type FeishuAlert struct {
-	lastHashs []lastHash // 摘要
-	mutex     sync.Mutex
-	robot     *feishu.GroupRobot
-	settings  map[string]struct {
+	settings map[string]struct {
 		webhook   string
 		signKey   string
 		userId    string
 		kibanaUrl string
 		esIndex   string
 	}
+	lastHashs []lastHash // 摘要
+	mutex     sync.Mutex
 }
 
 type lastHash struct {
