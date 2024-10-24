@@ -36,6 +36,10 @@ func (f *FeishuAlert) Add(name string, option Option) {
 		panic("Option webhook empty " + name)
 	}
 
+	if f.options == nil {
+		f.options = make(map[string]Option)
+	}
+
 	f.options[name] = option
 }
 
