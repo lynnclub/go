@@ -13,13 +13,7 @@ import (
 )
 
 type FeishuAlert struct {
-	settings map[string]struct {
-		webhook   string
-		signKey   string
-		userId    string
-		kibanaUrl string
-		esIndex   string
-	}
+	options   map[string]Option
 	lastHashs []lastHash // 摘要
 	mutex     sync.Mutex
 }
@@ -29,8 +23,42 @@ type lastHash struct {
 	time time.Time
 }
 
-func (f *FeishuAlert) find(entry string) string {
-	for name := range f.settings {
+type Option struct {
+	Webhook   string `json:"webhook"`
+	SignKey   string `json:"sign_key"`
+	UserId    string `json:"user_id"`
+	KibanaUrl string `json:"kibana_url"`
+	EsIndex   string `json:"es_index"`
+}
+
+func (f *FeishuAlert) Add(name string, option Option) {
+	if option.Webhook == "" {
+		panic("Option webhook empty " + name)
+	}
+
+	f.options[name] = option
+}
+
+func (f *FeishuAlert) AddMap(name string, setting map[string]interface{}) {
+	option := Option{
+		Webhook:   setting["webhook"].(string),
+		SignKey:   setting["sign_key"].(string),
+		UserId:    setting["user_id"].(string),
+		KibanaUrl: setting["kibana_url"].(string),
+		EsIndex:   setting["es_index"].(string),
+	}
+
+	f.Add(name, option)
+}
+
+func (f *FeishuAlert) AddMapBatch(batch map[string]interface{}) {
+	for name, setting := range batch {
+		f.AddMap(name, setting.(map[string]interface{}))
+	}
+}
+
+func (f *FeishuAlert) FindOption(entry string) string {
+	for name := range f.options {
 		if strings.Contains(entry, name) {
 			return name
 		}
@@ -46,9 +74,14 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 
 	name := ""
 	if log["url"].(string) == "" {
-		name = f.find(log["command"].(string))
+		name = f.FindOption(log["command"].(string))
 	} else {
-		name = f.find(log["url"].(string))
+		name = f.FindOption(log["url"].(string))
+	}
+
+	option, ok := f.options[name]
+	if !ok {
+		return
 	}
 
 	newHash := lastHash{
@@ -76,10 +109,9 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 	safe.Catch(func() {
 		content := map[string]interface{}{
 			"tag":  "text",
-			"text": f.Format(log, f.settings[name].kibanaUrl, f.settings[name].esIndex),
+			"text": f.Format(log, option.KibanaUrl, option.EsIndex),
 		}
-		feishu.NewGroupRobot(f.settings[name].webhook, f.settings[name].signKey).
-			SendRich("", content, f.settings[name].userId)
+		feishu.NewGroupRobot(option.Webhook, option.SignKey).SendRich("", content, option.UserId)
 	}, func(err any) {
 		println(err)
 	})
