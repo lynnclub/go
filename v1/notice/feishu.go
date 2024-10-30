@@ -13,6 +13,15 @@ import (
 	"github.com/lynnclub/go/v1/safe"
 )
 
+var Feishu *FeishuAlert
+
+func NewFeishu(options map[string]interface{}) *FeishuAlert {
+	instance := &FeishuAlert{}
+	instance.AddMapBatch(options)
+
+	return instance
+}
+
 type FeishuAlert struct {
 	options   map[string]Option
 	lastHashs []lastHash // 摘要
@@ -71,9 +80,9 @@ func (f *FeishuAlert) AddMapBatch(batch map[string]interface{}) {
 	}
 }
 
-func (f *FeishuAlert) FindOption(level string, entry, defaultName string) string {
+func (f *FeishuAlert) FindOption(levelName string, entry, defaultName string) string {
 	for name, option := range f.options {
-		if (len(option.Levels) == 0 || array.In(option.Levels, level)) && strings.Contains(entry, name) {
+		if strings.Contains(entry, name) && (len(option.Levels) == 0 || array.In(option.Levels, levelName)) {
 			return name
 		}
 	}
