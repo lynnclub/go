@@ -571,7 +571,11 @@ Json 编码
 
 Json 编码
 
-**Decode(str string, v interface{}) error**
+**Decode(data string, v interface{}) error**
+
+Json 解码
+
+**DecodeFromByte(data []byte, v interface{}) error**
 
 Json 解码
 

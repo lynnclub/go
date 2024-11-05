@@ -17,6 +17,11 @@ func EncodeToByte(v interface{}) []byte {
 }
 
 // Decode Json解码
-func Decode(str string, v interface{}) error {
-	return json.Unmarshal([]byte(str), &v)
+func Decode(data string, v interface{}) error {
+	return json.Unmarshal([]byte(data), &v)
+}
+
+// DecodeFromByte Json解码
+func DecodeFromByte(data []byte, v interface{}) error {
+	return json.Unmarshal(data, &v)
 }
