@@ -17,10 +17,11 @@ var (
 )
 
 type Option struct {
-	Address  []string `json:"address"`   //地址，字符串数组
-	Password string   `json:"password"`  //密码，默认空
-	DB       int      `json:"db"`        //db
-	PoolSize int      `json:"pool_size"` //连接池最大数量，默认100
+	Address    []string `json:"address"`     //地址，字符串数组
+	Password   string   `json:"password"`    //密码，默认空
+	DB         int      `json:"db"`          //db
+	PoolSize   int      `json:"pool_size"`   //连接池最大数量，默认100
+	MasterName string   `json:"master_name"` //Sentinel集群模式，主库名称，默认mymaster
 }
 
 func Add(name string, option Option) {
@@ -31,6 +32,9 @@ func Add(name string, option Option) {
 	// 默认值
 	if option.PoolSize == 0 {
 		option.PoolSize = 100
+	}
+	if option.MasterName == "" {
+		option.MasterName = "mymaster"
 	}
 
 	options[name] = option

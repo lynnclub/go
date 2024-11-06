@@ -27,17 +27,17 @@ func Cluster(name string) *redis.ClusterClient {
 		panic("Option not found " + name)
 	}
 
-	newCluster := redis.NewClusterClient(&redis.ClusterOptions{
+	newClient := redis.NewClusterClient(&redis.ClusterOptions{
 		Addrs:    option.Address,
 		Password: option.Password,
 		PoolSize: option.PoolSize,
 	})
 
-	_, err := newCluster.Ping(Ctx).Result()
+	_, err := newClient.Ping(Ctx).Result()
 	if err != nil {
 		panic("Failed to connect redis cluster " + name + " err: " + err.Error())
 	}
 
-	poolCluster.Store(name, newCluster)
-	return newCluster
+	poolCluster.Store(name, newClient)
+	return newClient
 }
