@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/lynnclub/go/v1/logger"
+	"github.com/lynnclub/go/v1/signal"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -120,4 +121,16 @@ func GetConsumer(name string, queue string, optionFuncs ...func(*rabbitmq.Consum
 
 	poolConsumer.Store(name, consumer)
 	return consumer
+}
+
+func AsyncCloseConsumer(consumer *rabbitmq.Consumer) {
+	signal.Listen()
+
+	go func() {
+		fmt.Println("监听信号")
+		<-signal.ChannelOS
+		fmt.Println("收到信号", signal.Now)
+
+		consumer.Close()
+	}()
 }
