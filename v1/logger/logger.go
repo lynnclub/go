@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -120,6 +121,41 @@ func (l *logger) Fatal(message string, v ...interface{}) {
 	l.Raw.Fatalln(l.preprocessing(message, FATAL, v...))
 }
 
+// Debugf 调试
+func (l *logger) Debugf(format string, v ...interface{}) {
+	l.Debug(fmt.Sprintf(format, v...))
+}
+
+// Infof 信息
+func (l *logger) Infof(format string, v ...interface{}) {
+	l.Info(fmt.Sprintf(format, v...))
+}
+
+// Noticef 通知
+func (l *logger) Noticef(format string, v ...interface{}) {
+	l.Notice(fmt.Sprintf(format, v...))
+}
+
+// Warnf 警告
+func (l *logger) Warnf(format string, v ...interface{}) {
+	l.Warn(fmt.Sprintf(format, v...))
+}
+
+// Errorf 错误
+func (l *logger) Errorf(format string, v ...interface{}) {
+	l.Error(fmt.Sprintf(format, v...))
+}
+
+// Panicf 恐慌
+func (l *logger) Panicf(format string, v ...interface{}) {
+	l.Panic(fmt.Sprintf(format, v...))
+}
+
+// Fatalf 致命错误
+func (l *logger) Fatalf(format string, v ...interface{}) {
+	l.Fatal(fmt.Sprintf(format, v...))
+}
+
 // SetLevel 起始等级
 func SetLevel(level int) {
 	Logger.SetLevel(level)
@@ -168,6 +204,41 @@ func Panic(message string, v ...interface{}) {
 // Fatal 致命错误
 func Fatal(message string, v ...interface{}) {
 	Logger.Fatal(message, v...)
+}
+
+// Debugf 调试
+func Debugf(format string, v ...interface{}) {
+	Logger.Debug(fmt.Sprintf(format, v...))
+}
+
+// Infof 信息
+func Infof(format string, v ...interface{}) {
+	Logger.Info(fmt.Sprintf(format, v...))
+}
+
+// Noticef 通知
+func Noticef(format string, v ...interface{}) {
+	Logger.Notice(fmt.Sprintf(format, v...))
+}
+
+// Warnf 警告
+func Warnf(format string, v ...interface{}) {
+	Logger.Warn(fmt.Sprintf(format, v...))
+}
+
+// Errorf 错误
+func Errorf(format string, v ...interface{}) {
+	Logger.Error(fmt.Sprintf(format, v...))
+}
+
+// Panicf 恐慌
+func Panicf(format string, v ...interface{}) {
+	Logger.Panic(fmt.Sprintf(format, v...))
+}
+
+// Fatalf 致命错误
+func Fatalf(format string, v ...interface{}) {
+	Logger.Fatal(fmt.Sprintf(format, v...))
 }
 
 func (l *logger) preprocessing(message string, level int, v ...interface{}) string {
