@@ -23,13 +23,16 @@ func Trace(deep int) []string {
 	return trace
 }
 
+// Recover 错误处理
+func Recover(onErr func(err any)) {
+	if err := recover(); err != nil {
+		onErr(err)
+	}
+}
+
 // Catch 捕获错误
 func Catch(fn func(), onErr func(err any)) {
-	defer func() {
-		if err := recover(); err != nil {
-			onErr(err)
-		}
-	}()
+	defer Recover(onErr)
 
 	// 执行
 	fn()
