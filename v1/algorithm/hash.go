@@ -9,26 +9,26 @@ import (
 	"hash/crc32"
 )
 
-// MD5 生成十六进制字符串
+// MD5 返回十六进制字符串
 func MD5(str string) string {
 	hash := md5.Sum([]byte(str))
 
 	return hex.EncodeToString(hash[:])
 }
 
-// SHA1 生成十六进制字符串
+// SHA1 返回十六进制字符串
 func SHA1(str string) string {
 	hash := sha1.Sum([]byte(str))
 
 	return hex.EncodeToString(hash[:])
 }
 
-// Crc32 crc32加密
+// Crc32 crc32
 func Crc32(str string) uint32 {
 	return crc32.ChecksumIEEE([]byte(str))
 }
 
-// HmacSHA256 生成十六进制字符串
+// HmacSHA256 返回十六进制字符串
 func HmacSHA256(message string, secret string) string {
 	hash := hmac.New(sha256.New, []byte(secret))
 	hash.Write([]byte(message))
@@ -36,7 +36,7 @@ func HmacSHA256(message string, secret string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
-// HmacSHA1 生成十六进制字符串
+// HmacSHA1 返回十六进制字符串
 func HmacSHA1(s string, secret string) string {
 	hash := hmac.New(sha1.New, []byte(secret))
 	hash.Write([]byte(s))
