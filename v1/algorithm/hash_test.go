@@ -52,3 +52,12 @@ func BenchmarkMD5V3(b *testing.B) {
 		MD5v3("123")
 	}
 }
+
+func TestCRC32Hash(t *testing.T) {
+	expectedHashValue := uint32(3964322768)
+	hashValue := Crc32("Hello, World!")
+
+	if hashValue != expectedHashValue {
+		t.Errorf("Expected CRC32 hash: %d, got: %d", expectedHashValue, hashValue)
+	}
+}
