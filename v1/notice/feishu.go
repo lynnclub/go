@@ -145,12 +145,14 @@ func (f *FeishuAlert) Format(log map[string]interface{}, kibanaUrl, esIndex stri
 		elasticsearch.GetKuery("message", log["message"].(string)),
 	}
 
-	traceQuerys := make([]string, 0)
+	traceParam := ""
 	if trace, ok := log["trace"].(string); ok && trace != "" {
-		traceParam := elasticsearch.GetKuery("trace", trace)
-		querys = append(querys, traceParam)
-		traceQuerys = append(querys, traceParam)
+		traceParam = elasticsearch.GetKuery("trace", trace)
+	} else {
+		traceParam = elasticsearch.GetKuery("command", log["command"].(string))
 	}
+
+	querys = append(querys, traceParam)
 
 	return fmt.Sprintf(`环境：%s
 级别：%s
@@ -173,6 +175,6 @@ IP：%s
 		log["command"],
 		log["message"],
 		elasticsearch.GetKibanaUrl(kibanaUrl, esIndex, querys),
-		elasticsearch.GetKibanaUrl(kibanaUrl, esIndex, traceQuerys),
+		elasticsearch.GetKibanaUrl(kibanaUrl, esIndex, []string{traceParam}),
 	)
 }
