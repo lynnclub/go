@@ -265,7 +265,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 	}
 
 	if level > 2 {
-		full["extra"] = safe.Trace(10)
+		full["extra"] = safe.Trace(10, 4)
 	}
 
 	if l.request != nil {

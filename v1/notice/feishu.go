@@ -107,27 +107,36 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 		return
 	}
 
-	newHash := lastHash{
-		hash: algorithm.MD5(log["command"].(string) + log["message"].(string)),
-		time: time.Now(),
+	keyword := ""
+	if traces, ok := log["extra"].([]string); ok {
+		keyword = traces[0]
+	} else {
+		keyword = log["command"].(string) + log["message"].(string)
 	}
 
-	for _, lastHash := range f.lastHashs {
-		if lastHash.hash == newHash.hash {
-			if lastHash.time.Add(10 * time.Minute).After(newHash.time) {
-				return
+	if keyword != "" {
+		newHash := lastHash{
+			hash: algorithm.MD5(keyword),
+			time: time.Now(),
+		}
+
+		for _, lastHash := range f.lastHashs {
+			if lastHash.hash == newHash.hash {
+				if lastHash.time.Add(10 * time.Minute).After(newHash.time) {
+					return
+				}
 			}
 		}
+
+		f.mutex.Lock()
+
+		f.lastHashs = append(f.lastHashs, newHash)
+		if len(f.lastHashs) > 10 {
+			f.lastHashs = f.lastHashs[1:]
+		}
+
+		f.mutex.Unlock()
 	}
-
-	f.mutex.Lock()
-
-	f.lastHashs = append(f.lastHashs, newHash)
-	if len(f.lastHashs) > 10 {
-		f.lastHashs = f.lastHashs[1:]
-	}
-
-	f.mutex.Unlock()
 
 	safe.Catch(func() {
 		content := map[string]interface{}{
@@ -146,10 +155,11 @@ func (f *FeishuAlert) Format(log map[string]interface{}, kibanaUrl, esIndex stri
 	}
 
 	traceParam := ""
-	if trace, ok := log["trace"].(string); ok && trace != "" {
-		traceParam = elasticsearch.GetKuery("trace", trace)
-	} else {
+	if trace, ok := log["trace"].(string); !ok || trace == "" {
 		traceParam = elasticsearch.GetKuery("command", log["command"].(string))
+		log["trace"] = log["command"].(string)
+	} else {
+		traceParam = elasticsearch.GetKuery("trace", trace)
 	}
 
 	querys = append(querys, traceParam)
