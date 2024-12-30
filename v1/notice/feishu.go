@@ -108,7 +108,7 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 	}
 
 	keyword := ""
-	if traces, ok := log["extra"].([]string); ok {
+	if traces, ok := log["extra"].([]string); ok && len(traces) > 0 {
 		keyword = traces[0]
 	} else {
 		keyword = log["command"].(string) + log["message"].(string)
