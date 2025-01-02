@@ -15,19 +15,26 @@ func TestStart(t *testing.T) {
 	// 通用方式
 	_, file, _, _ := runtime.Caller(0)
 	pathDir := path.Dir(file)
-	Start("_TEST_MODE", pathDir)
+	Start("_TEST_MODE", pathDir+"/config")
 	env := Viper.GetString("name")
 	if env != "release" {
 		panic("config read error")
 	}
 
-	Viper = nil
 	err := os.Setenv("_TEST_MODE", "test")
 	if err != nil {
 		panic(err.Error())
 	}
 
-	Start("_TEST_MODE", pathDir)
+	Viper = nil
+	Start("_TEST_MODE", pathDir+"/config")
+	env = Viper.GetString("name")
+	if env != "test" {
+		panic("config read error")
+	}
+
+	Viper = nil
+	Start("_TEST_MODE", "not")
 	env = Viper.GetString("name")
 	if env != "test" {
 		panic("config read error")
