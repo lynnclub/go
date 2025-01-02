@@ -5,12 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/lynnclub/go/v1/datetime"
 	"github.com/lynnclub/go/v1/encoding/json"
 	"github.com/lynnclub/go/v1/ip"
-	"github.com/lynnclub/go/v1/safe"
 )
 
 var (
@@ -265,7 +266,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 	}
 
 	if level > 2 {
-		full["extra"] = safe.Trace(10, 4)
+		full["extra"] = Trace(4, 10)
 	}
 
 	if l.request != nil {
@@ -281,4 +282,20 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 	}
 
 	return json.Encode(full)
+}
+
+// Trace 执行链路
+func Trace(skip, deep int) []string {
+	trace := make([]string, 0)
+
+	pcs := make([]uintptr, deep)
+	deeps := runtime.Callers(skip, pcs)
+	for current := 0; current < deeps; current++ {
+		function := runtime.FuncForPC(pcs[current])
+		file, line := function.FileLine(pcs[current])
+		trace = append(trace, "["+strconv.Itoa(current)+"] "+function.Name()+"()")
+		trace = append(trace, file+":"+strconv.Itoa(line))
+	}
+
+	return trace
 }
