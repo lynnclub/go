@@ -1,8 +1,14 @@
 package datetime
 
 import (
+	"errors"
+	"math"
+	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/araddon/dateparse"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const LayoutTime = "15:04:05"
@@ -11,6 +17,39 @@ const LayoutDateHour = "2006-01-02 15"
 const LayoutDateTime = "2006-01-02 15:04:05"
 const LayoutDateTimeZone = "2006-01-02 15:04:05 -0700 MST"
 const LayoutDateTimeZoneT = "2006-01-02T15:04:05.999999-07:00"
+
+// Parse 解析时间
+func Parse(value any) (goTime time.Time, err error) {
+	switch v := value.(type) {
+	case time.Time:
+		goTime = v
+		err = nil
+	case []byte:
+		goTime, err = dateparse.ParseAny(string(v))
+	case string:
+		goTime, err = dateparse.ParseAny(v)
+	case int:
+		goTime = time.Unix(int64(v), 0)
+		err = nil
+	case int64:
+		goTime = time.Unix(v, 0)
+		err = nil
+	case float64:
+		sec, dec := math.Modf(v)
+		goTime = time.Unix(int64(sec), int64(dec*(1e9)))
+		err = nil
+	case primitive.DateTime:
+		goTime = v.Time()
+		err = nil
+	case primitive.Timestamp:
+		goTime = time.Unix(int64(v.T), int64(v.I))
+		err = nil
+	default:
+		err = errors.New("not support " + reflect.TypeOf(v).String())
+	}
+
+	return goTime, err
+}
 
 // ParseDateTime 解析日期时间
 func ParseDateTime(datetime string, timezone string) time.Time {

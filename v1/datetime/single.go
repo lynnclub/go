@@ -8,6 +8,13 @@ type single struct {
 	timezone string
 }
 
+func (s *single) Parse(value any) (goTime time.Time, err error) {
+	goTime, err = Parse(value)
+	s.timezone = goTime.Location().String()
+
+	return goTime, err
+}
+
 func (s *single) SetTimeZone(timezone string) {
 	s.timezone = timezone
 }

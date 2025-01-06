@@ -3,6 +3,7 @@ module github.com/lynnclub/go
 go 1.21
 
 require (
+	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/parnurzeal/gorequest v0.3.0

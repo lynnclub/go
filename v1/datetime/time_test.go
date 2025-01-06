@@ -1,11 +1,106 @@
 package datetime
 
 import (
+	"errors"
 	"fmt"
 	"testing"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const timezone = "Asia/Shanghai"
+
+func TestParse(t *testing.T) {
+	now := time.Now()
+
+	tests := []struct {
+		name      string
+		input     any
+		wantTime  time.Time
+		wantError error
+	}{
+		{
+			name:      "Time input",
+			input:     now,
+			wantTime:  now,
+			wantError: nil,
+		},
+		{
+			name:      "String input (valid date)",
+			input:     "2025-01-06T15:04:05Z",
+			wantTime:  time.Date(2025, 1, 6, 15, 4, 5, 0, time.UTC),
+			wantError: nil,
+		},
+		{
+			name:      "Invalid string input",
+			input:     "invalid-date",
+			wantTime:  time.Time{},
+			wantError: errors.New("Could not find format for \"invalid-date\""),
+		},
+		{
+			name:      "Integer input (Unix timestamp)",
+			input:     int(1673029200),
+			wantTime:  time.Unix(1673029200, 0),
+			wantError: nil,
+		},
+		{
+			name:      "Int64 input (Unix timestamp)",
+			input:     int64(1673029200),
+			wantTime:  time.Unix(1673029200, 0),
+			wantError: nil,
+		},
+		{
+			name:      "Float64 input (Unix timestamp with fractional seconds)",
+			input:     float64(1673029200.123),
+			wantTime:  time.Unix(1673029200, 122999906),
+			wantError: nil,
+		},
+		{
+			name:      "Primitive.DateTime input",
+			input:     primitive.NewDateTimeFromTime(time.Date(2025, 1, 6, 15, 4, 5, 0, time.UTC)),
+			wantTime:  time.Date(2025, 1, 6, 15, 4, 5, 0, time.UTC),
+			wantError: nil,
+		},
+		{
+			name:      "Primitive.Timestamp input",
+			input:     primitive.Timestamp{T: uint32(1673029200), I: 0},
+			wantTime:  time.Unix(1673029200, 0),
+			wantError: nil,
+		},
+		{
+			name:      "Unsupported map input",
+			input:     primitive.M{"key": "value"},
+			wantTime:  time.Time{},
+			wantError: errors.New("not support primitive.M"),
+		},
+		{
+			name:      "Unsupported slice type",
+			input:     []int{1, 2, 3},
+			wantTime:  time.Time{},
+			wantError: errors.New("not support []int"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotTime, gotErr := Parse(tt.input)
+			if !gotTime.Equal(tt.wantTime) {
+				t.Errorf("Parse(%v) got time = %v, want %v", tt.input, gotTime, tt.wantTime)
+			}
+			if !errorEquals(gotErr, tt.wantError) {
+				t.Errorf("Parse(%v) got error = %v, want %v", tt.input, gotErr, tt.wantError)
+			}
+		})
+	}
+}
+
+func errorEquals(err1, err2 error) bool {
+	if err1 == nil || err2 == nil {
+		return err1 == err2
+	}
+	return err1.Error() == err2.Error()
+}
 
 // TestParseDateTime 解析日期时间
 func TestParseDateTime(t *testing.T) {
