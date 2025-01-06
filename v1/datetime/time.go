@@ -18,8 +18,8 @@ const LayoutDateTime = "2006-01-02 15:04:05"
 const LayoutDateTimeZone = "2006-01-02 15:04:05 -0700 MST"
 const LayoutDateTimeZoneT = "2006-01-02T15:04:05.999999-07:00"
 
-// Parse 解析时间
-func Parse(value any) (goTime time.Time, err error) {
+// ParseAny 解析时间
+func ParseAny(value any) (goTime time.Time, err error) {
 	switch v := value.(type) {
 	case time.Time:
 		goTime = v

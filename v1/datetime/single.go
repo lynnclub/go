@@ -8,8 +8,8 @@ type single struct {
 	timezone string
 }
 
-func (s *single) Parse(value any) (goTime time.Time, err error) {
-	goTime, err = Parse(value)
+func (s *single) ParseAny(value any) (goTime time.Time, err error) {
+	goTime, err = ParseAny(value)
 	s.timezone = goTime.Location().String()
 
 	return goTime, err

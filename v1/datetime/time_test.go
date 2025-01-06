@@ -84,7 +84,7 @@ func TestParse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotTime, gotErr := Parse(tt.input)
+			gotTime, gotErr := ParseAny(tt.input)
 			if !gotTime.Equal(tt.wantTime) {
 				t.Errorf("Parse(%v) got time = %v, want %v", tt.input, gotTime, tt.wantTime)
 			}
