@@ -22,6 +22,7 @@ type Option struct {
 	DB         int      `json:"db"`          //db
 	PoolSize   int      `json:"pool_size"`   //连接池最大数量，默认100
 	MasterName string   `json:"master_name"` //Sentinel集群模式，主库名称，默认mymaster
+	TLS        bool     `json:"tls"`         //是否启用TLS，默认使用系统根证书
 }
 
 func Add(name string, option Option) {
@@ -46,6 +47,7 @@ func AddMap(name string, setting map[string]interface{}) {
 	for i, v := range address {
 		addressStrings[i] = v.(string)
 	}
+
 	option := Option{
 		Address: addressStrings,
 	}
@@ -58,6 +60,12 @@ func AddMap(name string, setting map[string]interface{}) {
 	}
 	if poolSize, ok := setting["pool_size"]; ok {
 		option.PoolSize = poolSize.(int)
+	}
+	if masterName, ok := setting["master_name"]; ok {
+		option.MasterName = masterName.(string)
+	}
+	if tls, ok := setting["tls"]; ok {
+		option.TLS = tls.(bool)
 	}
 
 	Add(name, option)

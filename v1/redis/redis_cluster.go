@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"crypto/tls"
 	"sync"
 
 	"github.com/go-redis/redis/v8"
@@ -28,11 +29,16 @@ func Cluster(name string) *redis.ClusterClient {
 		panic("Option not found " + name)
 	}
 
-	newClient := redis.NewClusterClient(&redis.ClusterOptions{
+	clusterOptions := &redis.ClusterOptions{
 		Addrs:    option.Address,
 		Password: option.Password,
 		PoolSize: option.PoolSize,
-	})
+	}
+	if option.TLS {
+		clusterOptions.TLSConfig = &tls.Config{}
+	}
+
+	newClient := redis.NewClusterClient(clusterOptions)
 
 	_, err := newClient.Ping(Ctx).Result()
 	if err != nil {
