@@ -48,8 +48,7 @@ func (robot *GroupRobot) Send(request interface{}) (response entity.GroupRobotRe
 
 	// 参数
 	params := map[string]interface{}{
-		"msg_type":  msgType,
-		"timestamp": now,
+		"msg_type": msgType,
 	}
 	if robot.SignKey != "" {
 		params["sign"], err = sign.FeiShu(robot.SignKey, now)
