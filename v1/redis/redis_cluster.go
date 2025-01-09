@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	poolCluster = &sync.Map{} //实例池
+	poolCluster  = &sync.Map{} //实例池
+	mutexCluster sync.Mutex    //互斥锁
 )
 
 // Cluster 使用集群
@@ -15,8 +16,8 @@ func Cluster(name string) *redis.ClusterClient {
 	if instance, ok := poolCluster.Load(name); ok {
 		return instance.(*redis.ClusterClient)
 	} else {
-		mutex.Lock()
-		defer mutex.Unlock()
+		mutexCluster.Lock()
+		defer mutexCluster.Unlock()
 		if instance, ok = pool.Load(name); ok {
 			return instance.(*redis.ClusterClient)
 		}

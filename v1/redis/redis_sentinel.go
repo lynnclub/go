@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	poolSentinel = &sync.Map{} //实例池
+	poolSentinel  = &sync.Map{} //实例池
+	mutexSentinel sync.Mutex    //互斥锁
 )
 
 // Sentinel 使用Sentinel集群
@@ -15,8 +16,8 @@ func Sentinel(name string) *redis.Client {
 	if instance, ok := poolSentinel.Load(name); ok {
 		return instance.(*redis.Client)
 	} else {
-		mutex.Lock()
-		defer mutex.Unlock()
+		mutexSentinel.Lock()
+		defer mutexSentinel.Unlock()
 		if instance, ok = pool.Load(name); ok {
 			return instance.(*redis.Client)
 		}
