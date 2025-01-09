@@ -1,12 +1,11 @@
 package feishu
 
 import (
-	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/lynnclub/go/v1/bytedance/feishu/entity"
+	"github.com/lynnclub/go/v1/encoding/json"
 	"github.com/lynnclub/go/v1/sign"
 	"github.com/parnurzeal/gorequest"
 )
@@ -26,9 +25,7 @@ func NewGroupRobot(webhook, signKey string) *GroupRobot {
 }
 
 // Send 发送消息
-func (robot *GroupRobot) Send(request interface{}) (entity.GroupRobotResponse, error) {
-	var response entity.GroupRobotResponse
-
+func (robot *GroupRobot) Send(request interface{}) (response entity.GroupRobotResponse, err error) {
 	// 类型检测
 	msgType := ""
 	switch request.(type) {
@@ -50,27 +47,24 @@ func (robot *GroupRobot) Send(request interface{}) (entity.GroupRobotResponse, e
 	now := time.Now().Unix()
 
 	// 参数
-	params := make(map[string]string)
-	params["timestamp"] = strconv.FormatInt(now, 10)
-
-	var err error
-	params["sign"], err = sign.FeiShu(robot.SignKey, now)
-	if err != nil {
-		return response, err
+	params := map[string]interface{}{
+		"msg_type":  msgType,
+		"timestamp": now,
+	}
+	if robot.SignKey != "" {
+		params["sign"], err = sign.FeiShu(robot.SignKey, now)
+		if err != nil {
+			return response, err
+		}
 	}
 
-	tmpByte, err := json.Marshal(request)
-	if err != nil {
-		return response, err
-	}
-
-	params["msg_type"] = msgType
+	requestStr := json.Encode(request)
 	if msgType == "interactive" {
 		// 消息卡片
-		params["card"] = string(tmpByte)
+		params["card"] = requestStr
 	} else {
 		// 默认
-		params["content"] = string(tmpByte)
+		params["content"] = requestStr
 	}
 
 	// 请求
@@ -83,7 +77,7 @@ func (robot *GroupRobot) Send(request interface{}) (entity.GroupRobotResponse, e
 		return response, errs[0]
 	}
 
-	if err = json.Unmarshal([]byte(body), &response); err != nil {
+	if err = json.Decode(body, &response); err != nil {
 		return response, err
 	}
 
