@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/parnurzeal/gorequest v0.3.0
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/spf13/viper v1.19.0
 	github.com/wagslane/go-rabbitmq v0.14.1
 	go.mongodb.org/mongo-driver v1.16.0
