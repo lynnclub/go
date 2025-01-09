@@ -16,7 +16,7 @@ func TestGORM(t *testing.T) {
 		panic(err.Error())
 	}
 
-	config.Start("_TEST_MODE", "../config")
+	config.Start("_TEST_MODE", "../config/config")
 
 	AddMapBatch(config.Viper.GetStringMap("db"))
 
