@@ -22,7 +22,7 @@ golang、php、java 等语言，语法特性各异、流行开源包多样、面
 | v1/safe             | 安全运行协程 | v1.0  | 错误捕获、重试、协程重试。               |
 | v1/db               | 数据库       | v1.0  | 基于 gorm，支持多种数据库。              |
 | v1/mongo            | Mongodb      | v1.0  | 基于官方 mongo 包。                      |
-| v1/redis            | Redis        | v1.0  | 基于 go-redis v8。                       |
+| v1/redis            | Redis        | v1.0  | 基于 go-redis v8及以上。                 |
 | v1/logger           | 日志         | v1.0  | 输出 json 日志，支持按级别发送通知。     |
 | v1/notice           | 通知         | v1.0  | 邮件，飞书。                             |
 | v1/datetime         | 日期时间     | v1.0  | 各种时间方法，主要围绕时区封装。         |
@@ -147,7 +147,7 @@ testDB := db.Use("test")
 
 ## v1/redis
 
-基于 go-redis v8，仅封装了配置与实例池。
+基于 go-redis v9，仅封装了配置与实例池。
 
 ### 定义
 
