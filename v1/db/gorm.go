@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -135,7 +136,9 @@ func Use(name string) *gorm.DB {
 	)
 
 	newGorm, err := gorm.Open(dialect, &gorm.Config{Logger: gormLogger})
-	if err != nil {
+	if err == nil {
+		fmt.Println("Connected to database", name)
+	} else {
 		panic("Failed to connect database " + name + " err: " + err.Error())
 	}
 

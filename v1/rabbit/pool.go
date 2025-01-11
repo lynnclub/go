@@ -66,7 +66,9 @@ func Use(name string) *rabbitmq.Conn {
 	}
 
 	conn, err := rabbitmq.NewConn(option.DSN)
-	if err != nil {
+	if err == nil {
+		fmt.Println("Connected to rabbitmq", name)
+	} else {
 		panic("Failed to connect rabbitmq " + name + " err: " + err.Error())
 	}
 

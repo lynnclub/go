@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -75,7 +76,9 @@ func Use(name string) *mongo.Client {
 	defer cancel()
 
 	err = newClient.Ping(ctx, readpref.Primary())
-	if err != nil {
+	if err == nil {
+		fmt.Println("Connected to mongodb", name)
+	} else {
 		panic("Failed to connect mongodb " + name + " err: " + err.Error())
 	}
 

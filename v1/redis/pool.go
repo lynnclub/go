@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
@@ -42,9 +43,8 @@ func Add(name string, option Option) {
 }
 
 func AddMap(name string, setting map[string]interface{}) {
-	address := setting["address"].([]interface{})
-	addressStrings := make([]string, len(address))
-	for i, v := range address {
+	addressStrings := make([]string, 0)
+	for i, v := range setting["address"].([]interface{}) {
 		addressStrings[i] = v.(string)
 	}
 
@@ -105,8 +105,10 @@ func Use(name string) *redis.Client {
 		PoolSize: option.PoolSize,
 	})
 
-	_, err := newClient.Ping(Ctx).Result()
-	if err != nil {
+	info, err := newClient.Ping(Ctx).Result()
+	if err == nil {
+		fmt.Println("Connected to redis", name, info)
+	} else {
 		panic("Failed to connect redis " + name + " err: " + err.Error())
 	}
 

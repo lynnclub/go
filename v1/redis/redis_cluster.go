@@ -2,6 +2,7 @@ package redis
 
 import (
 	"crypto/tls"
+	"fmt"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
@@ -40,8 +41,10 @@ func Cluster(name string) *redis.ClusterClient {
 
 	newClient := redis.NewClusterClient(clusterOptions)
 
-	_, err := newClient.Ping(Ctx).Result()
-	if err != nil {
+	info, err := newClient.Ping(Ctx).Result()
+	if err == nil {
+		fmt.Println("Connected to redis cluster", name, info)
+	} else {
 		panic("Failed to connect redis cluster " + name + " err: " + err.Error())
 	}
 

@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
@@ -35,8 +36,10 @@ func Sentinel(name string) *redis.Client {
 		PoolSize:      option.PoolSize,
 	})
 
-	_, err := newClient.Ping(Ctx).Result()
-	if err != nil {
+	info, err := newClient.Ping(Ctx).Result()
+	if err == nil {
+		fmt.Println("Connected to redis sentinel", name, info)
+	} else {
 		panic("Failed to connect redis sentinel " + name + " err: " + err.Error())
 	}
 
