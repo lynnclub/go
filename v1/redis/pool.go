@@ -44,8 +44,8 @@ func Add(name string, option Option) {
 
 func AddMap(name string, setting map[string]interface{}) {
 	addressStrings := make([]string, 0)
-	for i, v := range setting["address"].([]interface{}) {
-		addressStrings[i] = v.(string)
+	for _, v := range setting["address"].([]interface{}) {
+		addressStrings = append(addressStrings, v.(string))
 	}
 
 	option := Option{
