@@ -1,6 +1,9 @@
 package datetime
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 var Single = &single{}
 
@@ -10,9 +13,16 @@ type single struct {
 
 func (s *single) ParseAny(value any) (goTime time.Time, err error) {
 	goTime, err = ParseAny(value)
-	s.timezone = goTime.Location().String()
+	if err != nil {
+		return goTime, err
+	}
 
-	return goTime, err
+	timezone, err := time.LoadLocation(s.timezone)
+	if err != nil {
+		return goTime, errors.New("Error loading location:" + err.Error())
+	}
+
+	return goTime.In(timezone), err
 }
 
 func (s *single) SetTimeZone(timezone string) {
