@@ -85,9 +85,9 @@ func Use(name string) *elasticsearch.Client {
 	}
 
 	info, err := newClient.Info()
-	defer info.Body.Close()
 	if err == nil {
 		fmt.Println("Connected to elasticsearch", name, info)
+		info.Body.Close()
 	} else {
 		panic("Failed to connect elasticsearch " + name + " err: " + err.Error())
 	}
