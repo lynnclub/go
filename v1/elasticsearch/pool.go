@@ -54,8 +54,8 @@ func AddMapBatch(batch map[string]interface{}) {
 	}
 }
 
-// Use 使用
-func Use(name string) *elasticsearch.Client {
+// UseV8 使用
+func UseV8(name string) *elasticsearch.Client {
 	if name == "" {
 		name = "default"
 	}
