@@ -13,7 +13,7 @@ var (
 	mutexTyped sync.Mutex    //互斥锁
 )
 
-// TypedV8 使用TypedAPI
+// TypedV8 使用V8 TypedAPI
 func TypedV8(name string) *elasticsearch.TypedClient {
 	if name == "" {
 		name = "default"

@@ -6,7 +6,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-// UseV8 使用
+// UseV8 使用V8
 func UseV8(name string) *elasticsearch.Client {
 	if name == "" {
 		name = "default"
