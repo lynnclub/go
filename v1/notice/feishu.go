@@ -91,7 +91,7 @@ func (f *FeishuAlert) FindOption(levelName string, entry, defaultName string) st
 }
 
 func (f *FeishuAlert) Send(log map[string]interface{}) {
-	if log["level"].(int) < 200 {
+	if log["level"].(int) <= 200 {
 		return
 	}
 
