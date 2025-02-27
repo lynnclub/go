@@ -359,7 +359,7 @@ result, err := sign.FeiShu("123", 1667820457)
 
 获取本地 IP
 
-**GetClientIPs(r \*http.Request, trustedHeaders ...string) []string**
+**GetClients(r \*http.Request, trustedHeaders ...string) []string**
 
 获取用户 IP
 

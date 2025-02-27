@@ -282,7 +282,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		full["ua"] = l.request.UserAgent()
 		full["referer"] = l.request.Referer()
 
-		ips = ip.GetClientIPs(l.request)
+		ips = ip.GetClients(l.request)
 		if len(ips) > 0 {
 			full["ip"] = ips[0]
 		}

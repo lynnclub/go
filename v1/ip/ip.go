@@ -40,8 +40,8 @@ func Local(ipv6 bool) []string {
 	return ips
 }
 
-// GetClientIPs 获取用户IP
-func GetClientIPs(r *http.Request, trustedHeaders ...string) []string {
+// GetClients 获取用户IP
+func GetClients(r *http.Request, trustedHeaders ...string) []string {
 	ips := make([]string, 0)
 
 	if len(trustedHeaders) == 0 {
