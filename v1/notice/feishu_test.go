@@ -63,7 +63,7 @@ func TestSendDuplicateLog(t *testing.T) {
 	alert.Add("test", option)
 
 	log := map[string]interface{}{
-		"level":      3,
+		"level":      400,
 		"level_name": "ERROR",
 		"command":    "test_command",
 		"message":    "test_message",
