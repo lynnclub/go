@@ -269,7 +269,10 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		full["extra"] = Trace(4, 10)
 	}
 
-	if l.request != nil {
+	if l.request == nil {
+		full["channel"] = "script"
+	} else {
+		full["channel"] = "api"
 		full["method"] = l.request.Method
 		full["url"] = l.request.URL.String()
 		full["ua"] = l.request.UserAgent()
