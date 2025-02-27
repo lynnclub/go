@@ -14,19 +14,19 @@ import (
 	"github.com/lynnclub/go/v1/ip"
 )
 
-var (
-	levelFlags = []string{"DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "PANIC", "FATAL"}
-	Logger     = New(log.New(os.Stderr, "", log.Lmsgprefix), "local", DEBUG, "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
+const (
+	DEBUG  = 100
+	INFO   = 200
+	NOTICE = 250
+	WARN   = 300
+	ERROR  = 400
+	PANIC  = 500
+	FATAL  = 600
 )
 
-const (
-	DEBUG int = iota
-	INFO
-	NOTICE
-	WARN
-	ERROR
-	PANIC
-	FATAL
+var (
+	levelFlags = map[int]string{DEBUG: "DEBUG", INFO: "INFO", NOTICE: "NOTICE", WARN: "WARN", ERROR: "ERROR", PANIC: "PANIC", FATAL: "FATAL"}
+	Logger     = New(log.New(os.Stderr, "", log.Lmsgprefix), "local", DEBUG, "asia/shanghai", datetime.LayoutDateTimeZoneT, nil)
 )
 
 type logger struct {
@@ -243,6 +243,9 @@ func Fatalf(format string, v ...interface{}) {
 }
 
 func (l *logger) preprocessing(message string, level int, v ...interface{}) string {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
 	full := map[string]interface{}{
 		"datetime":   datetime.Any(l.timezone, l.timeFormat),
 		"env":        l.env,
@@ -254,6 +257,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		"command":    strings.Join(os.Args, " "),
 		"message":    l.Raw.Prefix() + message,
 		"context":    json.Encode(v),
+		"memory":     memStats.Alloc,
 		"method":     "",
 		"url":        "",
 		"ua":         "",
@@ -265,7 +269,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		full["ip"] = ips[0]
 	}
 
-	if level > 2 {
+	if level > 200 {
 		full["extra"] = Trace(4, 10)
 	}
 
@@ -277,7 +281,11 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		full["url"] = l.request.URL.String()
 		full["ua"] = l.request.UserAgent()
 		full["referer"] = l.request.Referer()
-		// todo:: client_ip
+
+		ips = ip.GetClientIPs(l.request)
+		if len(ips) > 0 {
+			full["ip"] = ips[0]
+		}
 	}
 
 	if l.callback != nil {
@@ -293,7 +301,7 @@ func Trace(skip, deep int) []string {
 
 	pcs := make([]uintptr, deep)
 	deeps := runtime.Callers(skip, pcs)
-	for current := 0; current < deeps; current++ {
+	for current := range deeps {
 		function := runtime.FuncForPC(pcs[current])
 		file, line := function.FileLine(pcs[current])
 		trace = append(trace, "["+strconv.Itoa(current)+"] "+function.Name()+"()")

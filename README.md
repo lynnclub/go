@@ -359,9 +359,9 @@ result, err := sign.FeiShu("123", 1667820457)
 
 获取本地 IP
 
-**GetClientIP(c \*gin.Context) (string, error)**
+**GetClientIPs(r \*http.Request, trustedHeaders ...string) []string**
 
-获取 Header client-ip 的内容。
+获取用户 IP
 
 ### 实例
 

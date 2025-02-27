@@ -3,8 +3,8 @@ package ip
 import (
 	"fmt"
 	"net"
-
-	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
 )
 
 // Local 获取本地IP
@@ -40,14 +40,31 @@ func Local(ipv6 bool) []string {
 	return ips
 }
 
-// GetClientIP 获取Header client-ip 的内容
-// todo::不依赖gin，使用http.Request
-func GetClientIP(c *gin.Context) (string, error) {
-	ip := c.Request.Header.Get("client-ip")
-	netIp := net.ParseIP(ip)
-	if netIp != nil {
-		return ip, nil
+// GetClientIPs 获取用户IP
+func GetClientIPs(r *http.Request, trustedHeaders ...string) []string {
+	ips := make([]string, 0)
+
+	if len(trustedHeaders) == 0 {
+		trustedHeaders = []string{"X-Forwarded-For", "X-Real-IP"}
 	}
 
-	return c.ClientIP(), nil
+	for _, header := range trustedHeaders {
+		if value := r.Header.Get(header); value != "" {
+			for _, part := range strings.Split(value, ",") {
+				if ip := strings.TrimSpace(part); ip != "" {
+					ips = append(ips, ip)
+				}
+			}
+		}
+	}
+
+	if remoteAddr := r.RemoteAddr; remoteAddr != "" {
+		if ip, _, err := net.SplitHostPort(remoteAddr); err == nil {
+			ips = append(ips, ip)
+		} else {
+			ips = append(ips, remoteAddr)
+		}
+	}
+
+	return ips
 }
