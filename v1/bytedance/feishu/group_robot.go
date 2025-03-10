@@ -24,6 +24,28 @@ func NewGroupRobot(webhook, signKey string) *GroupRobot {
 	}
 }
 
+func (robot *GroupRobot) SendRaw(params interface{}) (response entity.GroupRobotResponse, err error) {
+	// 请求
+	_, body, errs := gorequest.New().Post(robot.Webhook).
+		Set("Content-Type", "application/json").
+		Send(params).
+		Timeout(5 * time.Second).
+		End()
+	if len(errs) > 0 {
+		return response, errs[0]
+	}
+
+	if err = json.Decode(body, &response); err != nil {
+		return response, err
+	}
+
+	if response.StatusCode != 0 {
+		return response, errors.New(response.StatusMessage)
+	}
+
+	return response, nil
+}
+
 // Send 发送消息
 func (robot *GroupRobot) Send(request interface{}) (response entity.GroupRobotResponse, err error) {
 	// 类型检测
@@ -66,25 +88,7 @@ func (robot *GroupRobot) Send(request interface{}) (response entity.GroupRobotRe
 		params["content"] = requestStr
 	}
 
-	// 请求
-	_, body, errs := gorequest.New().Post(robot.Webhook).
-		Set("Content-Type", "application/json").
-		SendMap(params).
-		Timeout(5 * time.Second).
-		End()
-	if len(errs) > 0 {
-		return response, errs[0]
-	}
-
-	if err = json.Decode(body, &response); err != nil {
-		return response, err
-	}
-
-	if response.StatusCode != 0 {
-		return response, errors.New(response.StatusMessage)
-	}
-
-	return response, nil
+	return robot.SendRaw(params)
 }
 
 func (robot *GroupRobot) SendRich(title string, content map[string]interface{}, userId string) {
