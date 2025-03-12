@@ -90,12 +90,7 @@ func GetPublisher(name string, optionFuncs ...func(*rabbitmq.PublisherOptions)) 
 	publisher, err := rabbitmq.NewPublisher(Use(name), optionFuncs...)
 	if err == nil {
 		publisher.NotifyReturn(func(r rabbitmq.Return) {
-			fmt.Println("rabbitmq message returned from server: " + string(r.Body))
 			logger.Error("rabbitmq message returned from server: " + string(r.Body))
-		})
-
-		publisher.NotifyPublish(func(c rabbitmq.Confirmation) {
-			fmt.Println("rabbitmq publish", c.DeliveryTag)
 		})
 	} else {
 		panic("Failed to new rabbitmq publisher " + name + " err: " + err.Error())
