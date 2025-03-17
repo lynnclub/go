@@ -269,7 +269,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		full["ip"] = ips[0]
 	}
 
-	if level > 200 {
+	if level > 250 {
 		full["extra"] = Trace(4, 10)
 	}
 
