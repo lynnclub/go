@@ -254,7 +254,7 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 		"level_name": levelFlags[level],
 		"trace":      l.trace,
 		"ip":         "",
-		"command":    strings.Join(os.Args, " "),
+		"command":    "",
 		"message":    l.Raw.Prefix() + message,
 		"context":    json.Encode(v),
 		"memory":     memStats.Alloc,
@@ -275,8 +275,10 @@ func (l *logger) preprocessing(message string, level int, v ...interface{}) stri
 
 	if l.request == nil {
 		full["channel"] = "script"
+		full["command"] = strings.Join(os.Args, " ")
 	} else {
 		full["channel"] = "api"
+		full["command"] = strings.Join(os.Args, " ") + " " + l.request.URL.String()
 		full["method"] = l.request.Method
 		full["url"] = l.request.URL.String()
 		full["ua"] = l.request.UserAgent()
