@@ -30,17 +30,17 @@ var (
 )
 
 type logger struct {
-	Raw        *log.Logger                      // 原生log
-	env        string                           // 环境
-	level      int                              // 起始级别
-	trace      string                           // 追踪标识，traceId/userId/orderId等
-	timezone   string                           // 时区
-	timeFormat string                           // 时间格式
-	request    *http.Request                    // 请求
-	callback   func(log map[string]interface{}) // 回调
+	Raw        *log.Logger        // 原生log
+	env        string             // 环境
+	level      int                // 起始级别
+	trace      string             // 追踪标识，traceId/userId/orderId等
+	timezone   string             // 时区
+	timeFormat string             // 时间格式
+	request    *http.Request      // 请求
+	callback   func(log LogEntry) // 回调
 }
 
-func New(raw *log.Logger, env string, level int, timezone, timeFormat string, callback func(log map[string]interface{})) *logger {
+func New(raw *log.Logger, env string, level int, timezone, timeFormat string, callback func(log LogEntry)) *logger {
 	return &logger{
 		Raw:        raw,
 		env:        env,
@@ -242,51 +242,70 @@ func Fatalf(format string, v ...interface{}) {
 	Logger.Fatal(fmt.Sprintf(format, v...))
 }
 
+type LogEntry struct {
+	Datetime  string      `json:"datetime"`
+	Env       string      `json:"env"`
+	Channel   string      `json:"channel"`
+	Level     int         `json:"level"`
+	LevelName string      `json:"level_name"`
+	Trace     string      `json:"trace"`
+	IP        string      `json:"ip"`
+	Command   string      `json:"command"`
+	Message   string      `json:"message"`
+	Context   string      `json:"context"`
+	Memory    uint64      `json:"memory"`
+	Method    string      `json:"method"`
+	URL       string      `json:"url"`
+	UserAgent string      `json:"ua"`
+	Referer   string      `json:"referer"`
+	Extra     interface{} `json:"extra,omitempty"`
+}
+
 func (l *logger) preprocessing(message string, level int, v ...interface{}) string {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
-	full := map[string]interface{}{
-		"datetime":   datetime.Any(l.timezone, l.timeFormat),
-		"env":        l.env,
-		"channel":    "",
-		"level":      level,
-		"level_name": levelFlags[level],
-		"trace":      l.trace,
-		"ip":         "",
-		"command":    "",
-		"message":    l.Raw.Prefix() + message,
-		"context":    json.Encode(v),
-		"memory":     memStats.Alloc,
-		"method":     "",
-		"url":        "",
-		"ua":         "",
-		"referer":    "",
+	full := LogEntry{
+		Datetime:  datetime.Any(l.timezone, l.timeFormat),
+		Env:       l.env,
+		Channel:   "",
+		Level:     level,
+		LevelName: levelFlags[level],
+		Trace:     l.trace,
+		IP:        "",
+		Command:   "",
+		Message:   l.Raw.Prefix() + message,
+		Context:   json.Encode(v),
+		Memory:    memStats.Alloc,
+		Method:    "",
+		URL:       "",
+		UserAgent: "",
+		Referer:   "",
 	}
 
 	ips := ip.Local(true)
 	if len(ips) > 0 {
-		full["ip"] = ips[0]
+		full.IP = ips[0]
 	}
 
 	if level > 250 {
-		full["extra"] = Trace(4, 10)
+		full.Extra = Trace(4, 10)
 	}
 
 	if l.request == nil {
-		full["channel"] = "script"
-		full["command"] = strings.Join(os.Args, " ")
+		full.Channel = "script"
+		full.Command = strings.Join(os.Args, " ")
 	} else {
-		full["channel"] = "api"
-		full["command"] = strings.Join(os.Args, " ") + " " + l.request.URL.String()
-		full["method"] = l.request.Method
-		full["url"] = l.request.URL.String()
-		full["ua"] = l.request.UserAgent()
-		full["referer"] = l.request.Referer()
+		full.Channel = "api"
+		full.Command = strings.Join(os.Args, " ") + " " + l.request.URL.String()
+		full.Method = l.request.Method
+		full.URL = l.request.URL.String()
+		full.UserAgent = l.request.UserAgent()
+		full.Referer = l.request.Referer()
 
 		ips = ip.GetClients(l.request)
 		if len(ips) > 0 {
-			full["ip"] = ips[0]
+			full.IP = ips[0]
 		}
 	}
 
