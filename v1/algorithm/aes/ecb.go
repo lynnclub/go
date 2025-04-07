@@ -72,7 +72,7 @@ func Pad(data []byte, blockSize int) []byte {
 func Unpad(data []byte) []byte {
 	length := len(data)
 	if length == 0 {
-		return nil
+		return data
 	}
 
 	unpadding := int(data[length-1])
