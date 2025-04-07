@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 )
 
 func EncryptECB(plainText string, key string) (string, error) {
@@ -42,7 +43,7 @@ func DecryptECB(cipherTextString string, key string) (string, error) {
 	}
 
 	if len(cipherText) == 0 {
-		return "", errors.New("cipherText is empty")
+		return "", fmt.Errorf("invalid ciphertext: %w", err)
 	}
 
 	if len(cipherText)%block.BlockSize() != 0 {
@@ -70,6 +71,10 @@ func Pad(data []byte, blockSize int) []byte {
 // Unpad 去除填充
 func Unpad(data []byte) []byte {
 	length := len(data)
+	if length == 0 {
+		return nil
+	}
+
 	unpadding := int(data[length-1])
 	return data[:(length - unpadding)]
 }
