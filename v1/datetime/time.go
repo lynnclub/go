@@ -17,6 +17,7 @@ const LayoutDateHour = "2006-01-02 15"
 const LayoutDateTime = "2006-01-02 15:04:05"
 const LayoutDateTimeZone = "2006-01-02 15:04:05 -0700 MST"
 const LayoutDateTimeZoneT = "2006-01-02T15:04:05.999999-07:00"
+const LayoutMonth = "2006-01"
 
 // ParseAny 解析时间
 func ParseAny(value any) (goTime time.Time, err error) {
