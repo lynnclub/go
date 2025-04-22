@@ -15,7 +15,6 @@ var (
 	pool    = &sync.Map{}             //实例池
 	mutex   sync.Mutex                //互斥锁
 	options = make(map[string]Option) //配置池
-	Default *mongo.Client             //默认数据库
 )
 
 type Option struct {
@@ -80,10 +79,6 @@ func Use(name string) *mongo.Client {
 		fmt.Println("Connected to mongodb", name)
 	} else {
 		panic("Failed to connect mongodb " + name + " err: " + err.Error())
-	}
-
-	if name == "default" {
-		Default = newClient
 	}
 
 	pool.Store(name, newClient)

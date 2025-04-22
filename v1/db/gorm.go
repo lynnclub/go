@@ -20,7 +20,6 @@ var (
 	pool    = &sync.Map{}             //实例池
 	mutex   sync.Mutex                //互斥锁
 	options = make(map[string]Option) //配置池
-	Default *gorm.DB                  //默认数据库
 )
 
 type Option struct {
@@ -147,10 +146,6 @@ func Use(name string) *gorm.DB {
 	sqlDB.SetMaxOpenConns(option.MaxOpenConn)
 	// 空闲连接的最大数量
 	sqlDB.SetMaxIdleConns(option.MaxIdleConn)
-
-	if name == "default" {
-		Default = newGorm
-	}
 
 	pool.Store(name, newGorm)
 	return newGorm

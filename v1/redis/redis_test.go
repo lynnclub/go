@@ -29,7 +29,7 @@ func TestGoRedis(t *testing.T) {
 
 			goDB := Use("")
 			fmt.Printf("%p\n", goDB)
-			if goDB != Default {
+			if goDB != Use("default") {
 				panic("redis not reuse")
 			}
 		}()
@@ -40,11 +40,8 @@ func TestGoRedis(t *testing.T) {
 	if err = db.Ping(Ctx).Err(); err != nil {
 		panic("redis go-redis error " + err.Error())
 	}
-	if err = Default.Ping(Ctx).Err(); err != nil {
-		panic("redis go-redis error " + err.Error())
-	}
 
-	_, err = Default.Get(Ctx, "the_key_does_not_exist_yeah").Result()
+	_, err = db.Get(Ctx, "the_key_does_not_exist_yeah").Result()
 	if err != Nil {
 		panic("redis go-redis error " + err.Error())
 	}

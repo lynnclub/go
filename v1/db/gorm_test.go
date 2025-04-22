@@ -30,7 +30,7 @@ func TestGORM(t *testing.T) {
 
 			goDB := Use("")
 			fmt.Printf("%p\n", goDB)
-			if goDB != Default {
+			if goDB != Use("default") {
 				panic("GORM mysql not reuse")
 			}
 		}()
@@ -38,10 +38,6 @@ func TestGORM(t *testing.T) {
 	wg.Wait()
 
 	db, _ := Use("").DB()
-	if err = db.Ping(); err != nil {
-		panic("GORM mysql error " + err.Error())
-	}
-	db, _ = Default.DB()
 	if err = db.Ping(); err != nil {
 		panic("GORM mysql error " + err.Error())
 	}

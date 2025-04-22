@@ -12,7 +12,6 @@ var (
 	pool    = &sync.Map{}             //实例池
 	mutex   sync.Mutex                //互斥锁
 	options = make(map[string]Option) //配置池
-	Default *redis.Client
 	Ctx     = context.Background()
 	Nil     = redis.Nil
 )
@@ -110,10 +109,6 @@ func Use(name string) *redis.Client {
 		fmt.Println("Connected to redis", name, info)
 	} else {
 		panic("Failed to connect redis " + name + " err: " + err.Error())
-	}
-
-	if name == "default" {
-		Default = newClient
 	}
 
 	pool.Store(name, newClient)

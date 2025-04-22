@@ -136,8 +136,6 @@ db.AddMapBatch(config.Viper.GetStringMap("db"))
 
 // 留空使用default配置
 defaultDB := db.Use("")
-// 初始化后，还可以直接通过Default访问
-db.Default
 
 // Use 使用
 testDB := db.Use("test")
@@ -210,8 +208,6 @@ redis.AddMapBatch(config.Viper.GetStringMap("redis"))
 
 // 留空使用default配置
 defaultRedis := redis.Use("")
-// 初始化后，还可以直接通过Default访问
-redis.Default
 // context.Background()
 redis.Ctx
 
@@ -219,8 +215,8 @@ redis.Ctx
 testRedis := redis.Use("test")
 
 // 锁
-redis.Default.Lock("login", 1)
-redis.Default.UnLock("login")
+redis.Use("").Lock("login", 1)
+redis.Use("").UnLock("login")
 
 // 最大值最小值
 maxMin := redis.MaxMin{CacheKey: "cache", Name: "test"}
