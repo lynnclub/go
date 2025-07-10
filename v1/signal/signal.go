@@ -10,7 +10,7 @@ import (
 var Now os.Signal
 
 // ChannelOS 系统信号
-var ChannelOS = make(chan os.Signal)
+var ChannelOS = make(chan os.Signal, 1)
 
 // Listen 监听
 // SIGHUP 挂起（hangup），当终端关闭或者连接的会话结束时，由内核发送给进程
