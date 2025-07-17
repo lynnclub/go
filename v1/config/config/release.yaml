@@ -5,6 +5,7 @@ db:
     dsn: "root:123456@tcp(0.0.0.0:3306)/test?charset=utf8mb4"
     max_open_conn: 100 #打开连接的最大数量，默认100
     max_idle_conn: 10 #空闲连接的最大数量，默认10
+    max_idle_time: 600 #空闲连接的最大存活时间，单位秒，默认600
     log_level: 4 #Silent 1、Error 2、Warn 3、Info 4，默认3
     slow_threshold: 1 #慢SQL阈值，单位秒，默认1
   postgres:
@@ -12,6 +13,7 @@ db:
     dsn: "host=localhost user=postgres password= dbname=test port=5432"
     max_open_conn: 100 #打开连接的最大数量，默认100
     max_idle_conn: 10 #空闲连接的最大数量，默认10
+    max_idle_time: 600 #空闲连接的最大存活时间，单位秒，默认600
     log_level: 4 #Silent 1、Error 2、Warn 3、Info 4，默认3
     slow_threshold: 1 #慢SQL阈值，单位秒，默认1
 

@@ -27,6 +27,7 @@ type Option struct {
 	Driver        string `json:"driver"`         //驱动，mysql、postgres、sqlite、sqlserver、clickhouse，默认mysql
 	MaxOpenConn   int    `json:"max_open_conn"`  //打开连接的最大数量，默认100
 	MaxIdleConn   int    `json:"max_idle_conn"`  //空闲连接的最大数量，默认10
+	MaxIdleTime   int    `json:"max_idle_time"`  //空闲连接的最大存活时间，单位秒，默认600
 	LogLevel      int    `json:"log_level"`      //Silent 1、Error 2、Warn 3、Info 4，默认3
 	SlowThreshold int    `json:"slow_threshold"` //慢SQL阈值，单位秒，默认1
 }
@@ -40,16 +41,19 @@ func Add(name string, option Option) {
 	if option.Driver == "" {
 		option.Driver = "mysql"
 	}
-	if option.MaxOpenConn == 0 {
+	if option.MaxOpenConn <= 0 {
 		option.MaxOpenConn = 100
 	}
-	if option.MaxIdleConn == 0 {
+	if option.MaxIdleConn <= 0 {
 		option.MaxIdleConn = 10
 	}
-	if option.LogLevel == 0 {
+	if option.MaxIdleTime <= 0 {
+		option.MaxIdleTime = 600
+	}
+	if option.LogLevel <= 0 {
 		option.LogLevel = 3
 	}
-	if option.SlowThreshold == 0 {
+	if option.SlowThreshold <= 0 {
 		option.SlowThreshold = 1
 	}
 
@@ -69,6 +73,9 @@ func AddMap(name string, setting map[string]interface{}) {
 	}
 	if maxIdleConn, ok := setting["max_idle_conn"]; ok {
 		option.MaxIdleConn = maxIdleConn.(int)
+	}
+	if maxIdleTime, ok := setting["max_idle_time"]; ok {
+		option.MaxIdleTime = maxIdleTime.(int)
 	}
 	if logLevel, ok := setting["log_level"]; ok {
 		option.LogLevel = logLevel.(int)
@@ -146,6 +153,8 @@ func Use(name string) *gorm.DB {
 	sqlDB.SetMaxOpenConns(option.MaxOpenConn)
 	// 空闲连接的最大数量
 	sqlDB.SetMaxIdleConns(option.MaxIdleConn)
+	// 空闲连接的最大存活时间
+	sqlDB.SetConnMaxIdleTime(time.Duration(option.MaxIdleTime) * time.Second)
 
 	pool.Store(name, newGorm)
 	return newGorm
