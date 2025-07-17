@@ -31,9 +31,12 @@ func Cluster(name string) *redis.ClusterClient {
 	}
 
 	clusterOptions := &redis.ClusterOptions{
-		Addrs:    option.Address,
-		Password: option.Password,
-		PoolSize: option.PoolSize,
+		Addrs:           option.Address,
+		Password:        option.Password,
+		PoolSize:        option.PoolSize,
+		MinIdleConns:    option.MinIdleConns,
+		MaxIdleConns:    option.MaxIdleConns,
+		ConnMaxIdleTime: option.ConnMaxIdleTime,
 	}
 	if option.TLS {
 		clusterOptions.TLSConfig = &tls.Config{}

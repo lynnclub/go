@@ -30,10 +30,13 @@ func Sentinel(name string) *redis.Client {
 	}
 
 	newClient := redis.NewFailoverClient(&redis.FailoverOptions{
-		MasterName:    option.MasterName,
-		SentinelAddrs: option.Address,
-		Password:      option.Password,
-		PoolSize:      option.PoolSize,
+		MasterName:      option.MasterName,
+		SentinelAddrs:   option.Address,
+		Password:        option.Password,
+		PoolSize:        option.PoolSize,
+		MinIdleConns:    option.MinIdleConns,
+		MaxIdleConns:    option.MaxIdleConns,
+		ConnMaxIdleTime: option.ConnMaxIdleTime,
 	})
 
 	info, err := newClient.Ping(Ctx).Result()
