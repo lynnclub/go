@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"crypto/tls"
 	"fmt"
 	"sync"
 
@@ -29,7 +30,7 @@ func Sentinel(name string) *redis.Client {
 		panic("Option not found " + name)
 	}
 
-	newClient := redis.NewFailoverClient(&redis.FailoverOptions{
+	failoverOptions := &redis.FailoverOptions{
 		MasterName:      option.MasterName,
 		SentinelAddrs:   option.Address,
 		Password:        option.Password,
@@ -37,7 +38,12 @@ func Sentinel(name string) *redis.Client {
 		MinIdleConns:    option.MinIdleConns,
 		MaxIdleConns:    option.MaxIdleConns,
 		ConnMaxIdleTime: option.ConnMaxIdleTime,
-	})
+	}
+	if option.TLS {
+		failoverOptions.TLSConfig = &tls.Config{}
+	}
+
+	newClient := redis.NewFailoverClient(failoverOptions)
 
 	info, err := newClient.Ping(Ctx).Result()
 	if err == nil {

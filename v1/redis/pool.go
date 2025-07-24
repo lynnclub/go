@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"sync"
 	"time"
@@ -119,7 +120,7 @@ func Use(name string) *redis.Client {
 		panic("Option not found " + name)
 	}
 
-	newClient := redis.NewClient(&redis.Options{
+	clientOptions := &redis.Options{
 		Addr:            option.Address[0],
 		DB:              option.DB,
 		Password:        option.Password,
@@ -127,7 +128,12 @@ func Use(name string) *redis.Client {
 		MinIdleConns:    option.MinIdleConns,
 		MaxIdleConns:    option.MaxIdleConns,
 		ConnMaxIdleTime: option.ConnMaxIdleTime,
-	})
+	}
+	if option.TLS {
+		clientOptions.TLSConfig = &tls.Config{}
+	}
+
+	newClient := redis.NewClient(clientOptions)
 
 	info, err := newClient.Ping(Ctx).Result()
 	if err == nil {

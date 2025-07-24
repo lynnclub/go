@@ -24,6 +24,7 @@ redis:
     password: "" #密码，默认空
     db: 0
     pool_size: 100 #连接池最大数量，默认100
+    tls: false #是否启用TLS，默认不启用
     min_idle_conns: 10 #最小空闲连接数，默认0
     max_idle_conns: 100 #最大空闲连接数，默认0（无限制）
     conn_max_idle_time: 600 #连接最大空闲时间，单位秒，默认30分钟
@@ -33,6 +34,7 @@ redis:
       - "0.0.0.0:6380"
     password: "" #密码，默认空
     pool_size: 100 #连接池最大数量，默认100
+    tls: false #是否启用TLS，默认不启用
     min_idle_conns: 10 #最小空闲连接数，默认0
     max_idle_conns: 100 #最大空闲连接数，默认0（无限制）
     conn_max_idle_time: 600 #连接最大空闲时间，单位秒，默认30分钟
