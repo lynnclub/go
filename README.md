@@ -771,7 +771,7 @@ response.Json(http.StatusUnauthorized, "请登录")
 
 群机器人实例化
 
-**Send(request interface{}) (entity.GroupRobotResponse, error)**
+**Send(request \*GroupRobotRequest) (response GroupRobotResponse, err error)**
 
 发送消息
 
@@ -786,23 +786,8 @@ import (
 // NewGroupRobot 群机器人实例化
 robot := feishu.NewGroupRobot(webhook, signKey)
 
-// Send 发送
-
-var data entity.PostData
-data.Title = "title"
-
-// 艾特用户
-if userId == "" {
-  data.Content = [][]map[string]interface{}{{content}}
-} else {
-  data.Content = [][]map[string]interface{}{{content, map[string]interface{}{
-    "tag":     "at",
-    "user_id": userId,
-  }}}
-}
-
-var richText entity.MsgTypePost
-richText.Post = map[string]entity.PostData{"zh_cn": data}
-
-_, _ = robot.Send(richText)
+// SendText 文本消息
+response1, err1 := robot.SendText("Hello 飞书！这是一条测试的文本消息")
+// SendRich 富文本消息
+response3, err3 := robot.SendRich("紧急通知", "数据库连接测试！", userId)
 ```

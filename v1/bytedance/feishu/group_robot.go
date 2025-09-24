@@ -4,19 +4,18 @@ import (
 	"errors"
 	"time"
 
-	"github.com/lynnclub/go/v1/bytedance/feishu/entity"
 	"github.com/lynnclub/go/v1/encoding/json"
 	"github.com/lynnclub/go/v1/sign"
 	"github.com/parnurzeal/gorequest"
 )
 
-// GroupRobot 群机器人
+// GroupRobot 飞书群机器人客户端
 type GroupRobot struct {
-	Webhook string //接口地址
-	SignKey string //签名KEY
+	Webhook string // 飞书机器人Webhook地址
+	SignKey string // 机器人签名密钥，用于验证消息来源
 }
 
-// NewGroupRobot 实例化
+// NewGroupRobot 创建群机器人客户端
 func NewGroupRobot(webhook, signKey string) *GroupRobot {
 	return &GroupRobot{
 		Webhook: webhook,
@@ -24,12 +23,12 @@ func NewGroupRobot(webhook, signKey string) *GroupRobot {
 	}
 }
 
-func (robot *GroupRobot) SendRaw(params interface{}) (response entity.GroupRobotResponse, err error) {
-	// 请求
+// SendRaw 发送原始参数到飞书API
+func (robot *GroupRobot) SendRaw(params interface{}) (response GroupRobotResponse, err error) {
 	_, body, errs := gorequest.New().Post(robot.Webhook).
 		Set("Content-Type", "application/json").
 		Send(params).
-		Timeout(5 * time.Second).
+		Timeout(3 * time.Second).
 		End()
 	if len(errs) > 0 {
 		return response, errs[0]
@@ -39,74 +38,62 @@ func (robot *GroupRobot) SendRaw(params interface{}) (response entity.GroupRobot
 		return response, err
 	}
 
-	if response.StatusCode != 0 {
-		return response, errors.New(response.StatusMessage)
+	if response.Code != 0 {
+		return response, errors.New(response.Msg)
 	}
 
 	return response, nil
 }
 
 // Send 发送消息
-func (robot *GroupRobot) Send(request interface{}) (response entity.GroupRobotResponse, err error) {
-	// 类型检测
-	msgType := ""
-	switch request.(type) {
-	case entity.MsgTypeText:
-		msgType = "text"
-	case entity.MsgTypePost:
-		msgType = "post"
-	case entity.MsgTypeShareChat:
-		msgType = "share_chat"
-	case entity.MsgTypeImage:
-		msgType = "image"
-	case entity.MsgTypeInteractive:
-		msgType = "interactive"
-	}
-	if msgType == "" {
-		return response, errors.New("消息类型有误")
-	}
-
-	now := time.Now().Unix()
-
-	// 参数
-	params := map[string]interface{}{
-		"msg_type": msgType,
-	}
+func (robot *GroupRobot) Send(request *GroupRobotRequest) (response GroupRobotResponse, err error) {
 	if robot.SignKey != "" {
-		params["sign"], err = sign.FeiShu(robot.SignKey, now)
+		signValue, err := sign.FeiShu(robot.SignKey, time.Now().Unix())
 		if err != nil {
 			return response, err
 		}
+
+		request.Sign = signValue
 	}
 
-	requestStr := json.Encode(request)
-	if msgType == "interactive" {
-		// 消息卡片
-		params["card"] = requestStr
-	} else {
-		// 默认
-		params["content"] = requestStr
-	}
-
-	return robot.SendRaw(params)
+	return robot.SendRaw(request)
 }
 
-func (robot *GroupRobot) SendRich(title string, content map[string]interface{}, userId string) {
-	var data entity.PostData
-	data.Title = title
+// SendText 发送文本消息（快捷方法）
+func (robot *GroupRobot) SendText(text string) (GroupRobotResponse, error) {
+	request := &GroupRobotRequest{}
+	request.BuildTextMessage(text)
+	return robot.Send(request)
+}
 
-	// 艾特用户
+// SendRich 发送富文本消息（快捷方法）
+func (robot *GroupRobot) SendRich(title, text, userId string) (GroupRobotResponse, error) {
+	request := &GroupRobotRequest{}
 	if userId == "" {
-		data.Content = [][]map[string]interface{}{{content}}
+		request.BuildRichMessage(title, text)
 	} else {
-		data.Content = [][]map[string]interface{}{{content, map[string]interface{}{
-			"tag":     "at",
-			"user_id": userId,
-		}}}
+		request.BuildRichMessage(title, text, userId)
 	}
+	return robot.Send(request)
+}
 
-	var richText entity.MsgTypePost
-	richText.Post = map[string]entity.PostData{"zh_cn": data}
+// SendImage 发送图片消息（快捷方法）
+func (robot *GroupRobot) SendImage(imageKey string) (GroupRobotResponse, error) {
+	request := &GroupRobotRequest{}
+	request.BuildImageMessage(imageKey)
+	return robot.Send(request)
+}
 
-	_, _ = robot.Send(richText)
+// SendShare 发送分享群名片消息（快捷方法）
+func (robot *GroupRobot) SendShare(chatID string) (GroupRobotResponse, error) {
+	request := &GroupRobotRequest{}
+	request.BuildShareMessage(chatID)
+	return robot.Send(request)
+}
+
+// SendCard 发送交互式卡片消息（快捷方法）
+func (robot *GroupRobot) SendCard(card any) (GroupRobotResponse, error) {
+	request := &GroupRobotRequest{}
+	request.BuildCardMessage(card)
+	return robot.Send(request)
 }

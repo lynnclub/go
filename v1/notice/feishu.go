@@ -139,10 +139,7 @@ func (f *FeishuAlert) Send(log map[string]interface{}) {
 	}
 
 	safe.Catch(func() {
-		content := map[string]interface{}{
-			"tag":  "text",
-			"text": f.Format(log, option.KibanaUrl, option.EsIndex),
-		}
+		content := f.Format(log, option.KibanaUrl, option.EsIndex)
 		feishu.NewGroupRobot(option.Webhook, option.SignKey).SendRich("", content, option.UserId)
 	}, func(err any) {
 		println(err)

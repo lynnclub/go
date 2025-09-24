@@ -137,10 +137,7 @@ func (f *FeishuAlert) Send(log LogEntry) {
 		f.mutex.Unlock()
 	}
 
-	content := map[string]interface{}{
-		"tag":  "text",
-		"text": f.Format(log, option.KibanaUrl, option.EsIndex),
-	}
+	content := f.Format(log, option.KibanaUrl, option.EsIndex)
 	feishu.NewGroupRobot(option.Webhook, option.SignKey).SendRich("", content, option.UserId)
 }
 
