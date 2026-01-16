@@ -275,3 +275,362 @@ func TestAddPanic(t *testing.T) {
 	}
 	Add("test_panic", option)
 }
+
+// TestUseWithDB 测试使用不同的DB
+func TestUseWithDB(t *testing.T) {
+	s := setupMiniRedis(t)
+	defer s.Close()
+
+	// 为不同的DB配置连接
+	for db := 0; db < 3; db++ {
+		configName := fmt.Sprintf("test_db_%d", db)
+		option := Option{
+			Address: []string{s.Addr()},
+			DB:      db,
+		}
+		Add(configName, option)
+	}
+
+	// 测试不同DB的数据隔离
+	client0 := Use("test_db_0")
+	client1 := Use("test_db_1")
+
+	// 在DB 0中设置值
+	err := client0.Set(Ctx, "isolation_test", "db0_value", 0).Err()
+	if err != nil {
+		t.Errorf("DB 0 Set失败: %v", err)
+	}
+
+	// 在DB 1中设置相同键但不同值
+	err = client1.Set(Ctx, "isolation_test", "db1_value", 0).Err()
+	if err != nil {
+		t.Errorf("DB 1 Set失败: %v", err)
+	}
+
+	// 验证数据隔离
+	val0, _ := client0.Get(Ctx, "isolation_test").Result()
+	val1, _ := client1.Get(Ctx, "isolation_test").Result()
+
+	if val0 != "db0_value" {
+		t.Errorf("DB 0期望值db0_value，实际%s", val0)
+	}
+	if val1 != "db1_value" {
+		t.Errorf("DB 1期望值db1_value，实际%s", val1)
+	}
+}
+
+// TestUseWithTLS 测试TLS配置
+func TestUseWithTLS(t *testing.T) {
+	option := Option{
+		Address: []string{"localhost:6380"},
+		TLS:     true,
+	}
+	Add("test_tls_config", option)
+
+	// 验证TLS配置已保存
+	opt := options["test_tls_config"]
+	if !opt.TLS {
+		t.Error("TLS配置未正确设置")
+	}
+}
+
+// TestAddWithAllOptions 测试设置所有选项
+func TestAddWithAllOptions(t *testing.T) {
+	option := Option{
+		Address:         []string{"localhost:6379"},
+		Password:        "complex_password",
+		DB:              5,
+		PoolSize:        200,
+		MinIdleConns:    20,
+		MaxIdleConns:    100,
+		ConnMaxIdleTime: 10 * time.Minute,
+		MasterName:      "custom_master",
+		TLS:             true,
+	}
+	Add("test_all_options", option)
+
+	opt := options["test_all_options"]
+	if opt.Password != "complex_password" {
+		t.Errorf("Password配置错误，期望complex_password，实际%s", opt.Password)
+	}
+	if opt.DB != 5 {
+		t.Errorf("DB配置错误，期望5，实际%d", opt.DB)
+	}
+	if opt.PoolSize != 200 {
+		t.Errorf("PoolSize配置错误，期望200，实际%d", opt.PoolSize)
+	}
+	if opt.MinIdleConns != 20 {
+		t.Errorf("MinIdleConns配置错误，期望20，实际%d", opt.MinIdleConns)
+	}
+	if opt.MaxIdleConns != 100 {
+		t.Errorf("MaxIdleConns配置错误，期望100，实际%d", opt.MaxIdleConns)
+	}
+	if opt.ConnMaxIdleTime != 10*time.Minute {
+		t.Errorf("ConnMaxIdleTime配置错误，期望10m，实际%v", opt.ConnMaxIdleTime)
+	}
+	if opt.MasterName != "custom_master" {
+		t.Errorf("MasterName配置错误，期望custom_master，实际%s", opt.MasterName)
+	}
+	if !opt.TLS {
+		t.Error("TLS配置错误，期望true，实际false")
+	}
+}
+
+// TestRedisOperations 测试各种Redis操作
+func TestRedisOperations(t *testing.T) {
+	s := setupMiniRedis(t)
+	defer s.Close()
+
+	option := Option{
+		Address: []string{s.Addr()},
+	}
+	Add("test_operations", option)
+
+	client := Use("test_operations")
+
+	// 测试String操作
+	t.Run("String操作", func(t *testing.T) {
+		err := client.Set(Ctx, "string_key", "string_value", 0).Err()
+		if err != nil {
+			t.Errorf("Set失败: %v", err)
+		}
+
+		val, err := client.Get(Ctx, "string_key").Result()
+		if err != nil {
+			t.Errorf("Get失败: %v", err)
+		}
+		if val != "string_value" {
+			t.Errorf("期望string_value，实际%s", val)
+		}
+
+		// 测试删除
+		err = client.Del(Ctx, "string_key").Err()
+		if err != nil {
+			t.Errorf("Del失败: %v", err)
+		}
+
+		_, err = client.Get(Ctx, "string_key").Result()
+		if err != Nil {
+			t.Errorf("删除后应该返回Nil错误，实际: %v", err)
+		}
+	})
+
+	// 测试Hash操作
+	t.Run("Hash操作", func(t *testing.T) {
+		err := client.HSet(Ctx, "hash_key", "field1", "value1").Err()
+		if err != nil {
+			t.Errorf("HSet失败: %v", err)
+		}
+
+		val, err := client.HGet(Ctx, "hash_key", "field1").Result()
+		if err != nil {
+			t.Errorf("HGet失败: %v", err)
+		}
+		if val != "value1" {
+			t.Errorf("期望value1，实际%s", val)
+		}
+	})
+
+	// 测试List操作
+	t.Run("List操作", func(t *testing.T) {
+		err := client.RPush(Ctx, "list_key", "item1", "item2", "item3").Err()
+		if err != nil {
+			t.Errorf("RPush失败: %v", err)
+		}
+
+		length, err := client.LLen(Ctx, "list_key").Result()
+		if err != nil {
+			t.Errorf("LLen失败: %v", err)
+		}
+		if length != 3 {
+			t.Errorf("期望列表长度3，实际%d", length)
+		}
+
+		val, err := client.LIndex(Ctx, "list_key", 0).Result()
+		if err != nil {
+			t.Errorf("LIndex失败: %v", err)
+		}
+		if val != "item1" {
+			t.Errorf("期望item1，实际%s", val)
+		}
+	})
+
+	// 测试Set操作
+	t.Run("Set操作", func(t *testing.T) {
+		err := client.SAdd(Ctx, "set_key", "member1", "member2", "member3").Err()
+		if err != nil {
+			t.Errorf("SAdd失败: %v", err)
+		}
+
+		count, err := client.SCard(Ctx, "set_key").Result()
+		if err != nil {
+			t.Errorf("SCard失败: %v", err)
+		}
+		if count != 3 {
+			t.Errorf("期望集合大小3，实际%d", count)
+		}
+
+		isMember, err := client.SIsMember(Ctx, "set_key", "member1").Result()
+		if err != nil {
+			t.Errorf("SIsMember失败: %v", err)
+		}
+		if !isMember {
+			t.Error("member1应该在集合中")
+		}
+	})
+
+	// 测试过期时间
+	t.Run("过期时间", func(t *testing.T) {
+		err := client.Set(Ctx, "expire_key", "value", 1*time.Second).Err()
+		if err != nil {
+			t.Errorf("Set with expire失败: %v", err)
+		}
+
+		ttl, err := client.TTL(Ctx, "expire_key").Result()
+		if err != nil {
+			t.Errorf("TTL失败: %v", err)
+		}
+		if ttl <= 0 {
+			t.Errorf("TTL应该大于0，实际%v", ttl)
+		}
+	})
+}
+
+// TestAddMapWithMissingFields 测试从map添加配置（缺少可选字段）
+func TestAddMapWithMissingFields(t *testing.T) {
+	setting := map[string]interface{}{
+		"address": []interface{}{"localhost:6379"},
+		// 所有其他字段都缺失，应该使用默认值
+	}
+	AddMap("test_map_minimal", setting)
+
+	opt, ok := options["test_map_minimal"]
+	if !ok {
+		t.Fatal("配置添加失败")
+	}
+
+	// 验证默认值
+	if opt.PoolSize != 100 {
+		t.Errorf("期望默认PoolSize为100，实际%d", opt.PoolSize)
+	}
+	if opt.MasterName != "mymaster" {
+		t.Errorf("期望默认MasterName为mymaster，实际%s", opt.MasterName)
+	}
+	if opt.ConnMaxIdleTime != 5*time.Minute {
+		t.Errorf("期望默认ConnMaxIdleTime为5分钟，实际%v", opt.ConnMaxIdleTime)
+	}
+}
+
+// TestNilError 测试Nil错误常量
+func TestNilError(t *testing.T) {
+	s := setupMiniRedis(t)
+	defer s.Close()
+
+	option := Option{
+		Address: []string{s.Addr()},
+	}
+	Add("test_nil_error", option)
+
+	client := Use("test_nil_error")
+
+	// 获取不存在的键应该返回Nil错误
+	_, err := client.Get(Ctx, "non_existent_key_for_nil_test").Result()
+	if err != Nil {
+		t.Errorf("期望Nil错误，实际%v", err)
+	}
+}
+
+// TestContextUsage 测试Context的使用
+func TestContextUsage(t *testing.T) {
+	s := setupMiniRedis(t)
+	defer s.Close()
+
+	option := Option{
+		Address: []string{s.Addr()},
+	}
+	Add("test_context", option)
+
+	client := Use("test_context")
+
+	// 使用全局Ctx
+	err := client.Set(Ctx, "ctx_key", "ctx_value", 0).Err()
+	if err != nil {
+		t.Errorf("使用Ctx Set失败: %v", err)
+	}
+
+	val, err := client.Get(Ctx, "ctx_key").Result()
+	if err != nil {
+		t.Errorf("使用Ctx Get失败: %v", err)
+	}
+	if val != "ctx_value" {
+		t.Errorf("期望ctx_value，实际%s", val)
+	}
+}
+
+// TestMultipleConfigs 测试多个不同配置共存
+func TestMultipleConfigs(t *testing.T) {
+	s1 := setupMiniRedis(t)
+	defer s1.Close()
+
+	s2 := setupMiniRedis(t)
+	defer s2.Close()
+
+	// 添加两个不同的配置
+	Add("redis1", Option{Address: []string{s1.Addr()}, DB: 0})
+	Add("redis2", Option{Address: []string{s2.Addr()}, DB: 1})
+
+	client1 := Use("redis1")
+	client2 := Use("redis2")
+
+	// 在两个不同的Redis实例中设置相同的键
+	client1.Set(Ctx, "multi_config_key", "value1", 0)
+	client2.Set(Ctx, "multi_config_key", "value2", 0)
+
+	val1, _ := client1.Get(Ctx, "multi_config_key").Result()
+	val2, _ := client2.Get(Ctx, "multi_config_key").Result()
+
+	if val1 != "value1" {
+		t.Errorf("redis1期望value1，实际%s", val1)
+	}
+	if val2 != "value2" {
+		t.Errorf("redis2期望value2，实际%s", val2)
+	}
+}
+
+// TestPoolSizeConfiguration 测试连接池大小配置的影响
+func TestPoolSizeConfiguration(t *testing.T) {
+	s := setupMiniRedis(t)
+	defer s.Close()
+
+	tests := []struct {
+		name     string
+		poolSize int
+	}{
+		{"小连接池", 1},
+		{"中连接池", 50},
+		{"大连接池", 200},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("pool_size_test_%d", tc.poolSize)
+			option := Option{
+				Address:  []string{s.Addr()},
+				PoolSize: tc.poolSize,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			if opt.PoolSize != tc.poolSize {
+				t.Errorf("期望PoolSize为%d，实际%d", tc.poolSize, opt.PoolSize)
+			}
+
+			// 测试连接可用性
+			client := Use(configName)
+			err := client.Ping(Ctx).Err()
+			if err != nil {
+				t.Errorf("Ping失败: %v", err)
+			}
+		})
+	}
+}

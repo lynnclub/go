@@ -333,3 +333,325 @@ func TestClusterWithDB(t *testing.T) {
 		t.Errorf("期望DB为5，实际为%d", opt.DB)
 	}
 }
+
+// TestClusterConnectionPooling 测试集群连接池的复用
+func TestClusterConnectionPooling(t *testing.T) {
+	// 添加配置但不实际连接（避免连接失败）
+	option := Option{
+		Address:  []string{"localhost:7000"},
+		PoolSize: 50,
+	}
+	Add("test_cluster_pool_reuse", option)
+
+	// 验证配置存在
+	if _, ok := options["test_cluster_pool_reuse"]; !ok {
+		t.Error("集群连接池配置添加失败")
+	}
+}
+
+// TestClusterMultipleInstanceConfigs 测试多个集群实例配置
+func TestClusterMultipleInstanceConfigs(t *testing.T) {
+	clusters := map[string][]string{
+		"cluster_prod":    {"prod-node1:7000", "prod-node2:7000", "prod-node3:7000"},
+		"cluster_staging": {"staging-node1:7000", "staging-node2:7000"},
+		"cluster_dev":     {"localhost:7000"},
+	}
+
+	for name, addresses := range clusters {
+		option := Option{
+			Address: addresses,
+		}
+		Add(name, option)
+
+		if opt, ok := options[name]; !ok {
+			t.Errorf("集群配置%s添加失败", name)
+		} else if len(opt.Address) != len(addresses) {
+			t.Errorf("集群%s地址数量不匹配，期望%d，实际%d", name, len(addresses), len(opt.Address))
+		}
+	}
+}
+
+// TestClusterAddressFormat 测试集群地址格式
+func TestClusterAddressFormat(t *testing.T) {
+	tests := []struct {
+		name      string
+		addresses []string
+	}{
+		{
+			"IP地址带端口",
+			[]string{"192.168.1.1:7000", "192.168.1.2:7000"},
+		},
+		{
+			"域名带端口",
+			[]string{"redis-cluster-1.example.com:7000", "redis-cluster-2.example.com:7000"},
+		},
+		{
+			"localhost",
+			[]string{"localhost:7000", "localhost:7001", "localhost:7002"},
+		},
+		{
+			"混合格式",
+			[]string{"192.168.1.1:7000", "redis.example.com:7001", "localhost:7002"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("test_cluster_addr_%s", tc.name)
+			option := Option{
+				Address: tc.addresses,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			for i, addr := range tc.addresses {
+				if opt.Address[i] != addr {
+					t.Errorf("地址%d不匹配，期望%s，实际%s", i, addr, opt.Address[i])
+				}
+			}
+		})
+	}
+}
+
+// TestClusterOptionsIndependence 测试不同配置的独立性
+func TestClusterOptionsIndependence(t *testing.T) {
+	option1 := Option{
+		Address:  []string{"node1:7000", "node2:7000"},
+		PoolSize: 50,
+	}
+	Add("cluster_independent_1", option1)
+
+	option2 := Option{
+		Address:  []string{"node3:7000", "node4:7000"},
+		PoolSize: 100,
+	}
+	Add("cluster_independent_2", option2)
+
+	// 验证两个配置互不影响
+	opt1 := options["cluster_independent_1"]
+	opt2 := options["cluster_independent_2"]
+
+	if opt1.PoolSize == opt2.PoolSize {
+		t.Error("两个配置的PoolSize不应该相同")
+	}
+
+	if len(opt1.Address) == 0 || len(opt2.Address) == 0 {
+		t.Error("配置的地址不应该为空")
+	}
+
+	// 验证两个配置的地址是不同的
+	if opt1.Address[0] == opt2.Address[0] {
+		t.Error("两个配置的地址应该不同")
+	}
+
+	// 验证配置被正确保存
+	if opt1.Address[0] != "node1:7000" {
+		t.Errorf("配置1的地址不正确，期望node1:7000，实际%s", opt1.Address[0])
+	}
+	if opt2.Address[0] != "node3:7000" {
+		t.Errorf("配置2的地址不正确，期望node3:7000，实际%s", opt2.Address[0])
+	}
+}
+
+// TestClusterConfigUpdate 测试配置更新
+func TestClusterConfigUpdate(t *testing.T) {
+	// 第一次添加配置
+	option1 := Option{
+		Address:  []string{"localhost:7000"},
+		PoolSize: 50,
+	}
+	Add("cluster_update_test", option1)
+
+	firstPoolSize := options["cluster_update_test"].PoolSize
+
+	// 更新配置
+	option2 := Option{
+		Address:  []string{"localhost:7000", "localhost:7001"},
+		PoolSize: 100,
+	}
+	Add("cluster_update_test", option2)
+
+	secondPoolSize := options["cluster_update_test"].PoolSize
+	secondAddressCount := len(options["cluster_update_test"].Address)
+
+	if firstPoolSize == secondPoolSize {
+		t.Error("配置应该被更新")
+	}
+
+	if secondPoolSize != 100 {
+		t.Errorf("更新后PoolSize期望100，实际%d", secondPoolSize)
+	}
+
+	if secondAddressCount != 2 {
+		t.Errorf("更新后地址数量期望2，实际%d", secondAddressCount)
+	}
+}
+
+// TestClusterPasswordSecurity 测试密码配置的安全性
+func TestClusterPasswordSecurity(t *testing.T) {
+	sensitivePassword := "very_secret_password_123!@#"
+
+	option := Option{
+		Address:  []string{"localhost:7000"},
+		Password: sensitivePassword,
+	}
+	Add("cluster_password_security", option)
+
+	opt := options["cluster_password_security"]
+
+	// 验证密码被正确保存（在实际应用中应该加密）
+	if opt.Password != sensitivePassword {
+		t.Error("密码配置不正确")
+	}
+
+	// 确保密码不是空字符串
+	if opt.Password == "" {
+		t.Error("密码不应该为空")
+	}
+}
+
+// TestClusterConnectionLimits 测试连接数限制配置
+func TestClusterConnectionLimits(t *testing.T) {
+	tests := []struct {
+		name         string
+		poolSize     int
+		minIdleConns int
+		maxIdleConns int
+		valid        bool
+	}{
+		{"正常配置", 100, 10, 50, true},
+		{"最小配置", 1, 0, 0, true},
+		{"大连接池", 1000, 100, 500, true},
+		{"最小空闲为0", 50, 0, 25, true},
+		{"最大空闲为0", 50, 10, 0, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("cluster_limits_%s", tc.name)
+			option := Option{
+				Address:      []string{"localhost:7000"},
+				PoolSize:     tc.poolSize,
+				MinIdleConns: tc.minIdleConns,
+				MaxIdleConns: tc.maxIdleConns,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			if opt.PoolSize != tc.poolSize {
+				t.Errorf("PoolSize期望%d，实际%d", tc.poolSize, opt.PoolSize)
+			}
+			if opt.MinIdleConns != tc.minIdleConns {
+				t.Errorf("MinIdleConns期望%d，实际%d", tc.minIdleConns, opt.MinIdleConns)
+			}
+			if opt.MaxIdleConns != tc.maxIdleConns {
+				t.Errorf("MaxIdleConns期望%d，实际%d", tc.maxIdleConns, opt.MaxIdleConns)
+			}
+		})
+	}
+}
+
+// TestClusterBatchConfigAddition 测试批量添加集群配置
+func TestClusterBatchConfigAddition(t *testing.T) {
+	batch := map[string]interface{}{
+		"cluster_batch_1": map[string]interface{}{
+			"address":   []interface{}{"node1:7000", "node2:7000"},
+			"pool_size": 60,
+		},
+		"cluster_batch_2": map[string]interface{}{
+			"address":   []interface{}{"node3:7000", "node4:7000"},
+			"pool_size": 70,
+		},
+		"cluster_batch_3": map[string]interface{}{
+			"address":   []interface{}{"node5:7000"},
+			"pool_size": 80,
+		},
+	}
+
+	AddMapBatch(batch)
+
+	// 验证所有配置都被添加
+	for i := 1; i <= 3; i++ {
+		configName := fmt.Sprintf("cluster_batch_%d", i)
+		if _, ok := options[configName]; !ok {
+			t.Errorf("批量配置%s添加失败", configName)
+		}
+	}
+
+	// 验证配置的正确性
+	if opt, ok := options["cluster_batch_1"]; ok && opt.PoolSize != 60 {
+		t.Errorf("cluster_batch_1的PoolSize期望60，实际%d", opt.PoolSize)
+	}
+	if opt, ok := options["cluster_batch_2"]; ok && opt.PoolSize != 70 {
+		t.Errorf("cluster_batch_2的PoolSize期望70，实际%d", opt.PoolSize)
+	}
+	if opt, ok := options["cluster_batch_3"]; ok && opt.PoolSize != 80 {
+		t.Errorf("cluster_batch_3的PoolSize期望80，实际%d", opt.PoolSize)
+	}
+}
+
+// TestClusterConfigConcurrentAccess 测试并发访问配置
+func TestClusterConfigConcurrentAccess(t *testing.T) {
+	// 预先添加配置
+	option := Option{
+		Address:  []string{"localhost:7000"},
+		PoolSize: 100,
+	}
+	Add("cluster_concurrent_read", option)
+
+	var wg sync.WaitGroup
+	errors := make(chan error, 50)
+
+	// 并发读取配置
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+
+			opt, ok := options["cluster_concurrent_read"]
+			if !ok {
+				errors <- fmt.Errorf("goroutine %d: 配置读取失败", idx)
+				return
+			}
+
+			if opt.PoolSize != 100 {
+				errors <- fmt.Errorf("goroutine %d: PoolSize错误，期望100，实际%d", idx, opt.PoolSize)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	// 检查错误
+	for err := range errors {
+		t.Error(err)
+	}
+}
+
+// TestClusterLargeScaleAddresses 测试大规模地址配置
+func TestClusterLargeScaleAddresses(t *testing.T) {
+	// 创建大量节点地址
+	addresses := make([]string, 100)
+	for i := 0; i < 100; i++ {
+		addresses[i] = fmt.Sprintf("node%d:7000", i)
+	}
+
+	option := Option{
+		Address: addresses,
+	}
+	Add("cluster_large_scale", option)
+
+	opt := options["cluster_large_scale"]
+	if len(opt.Address) != 100 {
+		t.Errorf("期望100个地址，实际%d个", len(opt.Address))
+	}
+
+	// 验证所有地址都正确保存
+	for i := 0; i < 100; i++ {
+		expected := fmt.Sprintf("node%d:7000", i)
+		if opt.Address[i] != expected {
+			t.Errorf("地址%d错误，期望%s，实际%s", i, expected, opt.Address[i])
+		}
+	}
+}
