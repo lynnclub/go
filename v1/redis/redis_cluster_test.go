@@ -1,7 +1,10 @@
 package redis
 
 import (
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 )
 
 // TestClusterConfig 测试Redis集群配置
@@ -96,6 +99,237 @@ func TestClusterDefaultValues(t *testing.T) {
 	}
 }
 
-// 注意：实际的Cluster连接测试需要真实的Redis集群环境
-// 在单元测试中，我们主要测试配置管理部分
-// 集成测试应在有真实集群环境时进行
+// TestClusterPoolSize 测试集群连接池大小配置
+func TestClusterPoolSize(t *testing.T) {
+	tests := []struct {
+		name     string
+		poolSize int
+		expected int
+	}{
+		{"自定义连接池大小50", 50, 50},
+		{"自定义连接池大小200", 200, 200},
+		{"自定义连接池大小1", 1, 1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("test_cluster_pool_%d", tc.poolSize)
+			option := Option{
+				Address:  []string{"localhost:7000"},
+				PoolSize: tc.poolSize,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			if opt.PoolSize != tc.expected {
+				t.Errorf("期望PoolSize为%d，实际为%d", tc.expected, opt.PoolSize)
+			}
+		})
+	}
+}
+
+// TestClusterIdleConnections 测试集群空闲连接配置
+func TestClusterIdleConnections(t *testing.T) {
+	option := Option{
+		Address:      []string{"localhost:7000"},
+		MinIdleConns: 10,
+		MaxIdleConns: 50,
+	}
+	Add("test_cluster_idle", option)
+
+	opt := options["test_cluster_idle"]
+	if opt.MinIdleConns != 10 {
+		t.Errorf("期望MinIdleConns为10，实际为%d", opt.MinIdleConns)
+	}
+	if opt.MaxIdleConns != 50 {
+		t.Errorf("期望MaxIdleConns为50，实际为%d", opt.MaxIdleConns)
+	}
+}
+
+// TestClusterConnMaxIdleTime 测试集群连接最大空闲时间
+func TestClusterConnMaxIdleTime(t *testing.T) {
+	tests := []struct {
+		name     string
+		idleTime time.Duration
+		expected time.Duration
+	}{
+		{"默认空闲时间", 0, 5 * time.Minute},
+		{"自定义10分钟", 10 * time.Minute, 10 * time.Minute},
+		{"自定义30秒", 30 * time.Second, 30 * time.Second},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("test_cluster_idle_time_%v", tc.idleTime)
+			option := Option{
+				Address:         []string{"localhost:7000"},
+				ConnMaxIdleTime: tc.idleTime,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			if opt.ConnMaxIdleTime != tc.expected {
+				t.Errorf("期望ConnMaxIdleTime为%v，实际为%v", tc.expected, opt.ConnMaxIdleTime)
+			}
+		})
+	}
+}
+
+// TestClusterPasswordConfiguration 测试集群密码配置
+func TestClusterPasswordConfiguration(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+	}{
+		{"无密码", ""},
+		{"简单密码", "simple_password"},
+		{"复杂密码", "C0mpl3x!P@ssw0rd#2024"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			configName := fmt.Sprintf("test_cluster_pwd_%s", tc.name)
+			option := Option{
+				Address:  []string{"localhost:7000"},
+				Password: tc.password,
+			}
+			Add(configName, option)
+
+			opt := options[configName]
+			if opt.Password != tc.password {
+				t.Errorf("期望Password为'%s'，实际为'%s'", tc.password, opt.Password)
+			}
+		})
+	}
+}
+
+// TestClusterConfigFromMap 测试从map配置集群
+func TestClusterConfigFromMap(t *testing.T) {
+	setting := map[string]interface{}{
+		"address":            []interface{}{"localhost:7000", "localhost:7001", "localhost:7002"},
+		"password":           "cluster_password",
+		"pool_size":          60,
+		"min_idle_conns":     6,
+		"max_idle_conns":     25,
+		"conn_max_idle_time": "8m",
+	}
+	AddMap("test_cluster_from_map", setting)
+
+	opt, ok := options["test_cluster_from_map"]
+	if !ok {
+		t.Fatal("从map添加集群配置失败")
+	}
+
+	if len(opt.Address) != 3 {
+		t.Errorf("期望3个地址，实际%d个", len(opt.Address))
+	}
+	if opt.Password != "cluster_password" {
+		t.Errorf("期望密码为cluster_password，实际为%s", opt.Password)
+	}
+	if opt.PoolSize != 60 {
+		t.Errorf("期望PoolSize为60，实际为%d", opt.PoolSize)
+	}
+	if opt.MinIdleConns != 6 {
+		t.Errorf("期望MinIdleConns为6，实际为%d", opt.MinIdleConns)
+	}
+	if opt.MaxIdleConns != 25 {
+		t.Errorf("期望MaxIdleConns为25，实际为%d", opt.MaxIdleConns)
+	}
+	if opt.ConnMaxIdleTime != 8*time.Minute {
+		t.Errorf("期望ConnMaxIdleTime为8分钟，实际为%v", opt.ConnMaxIdleTime)
+	}
+}
+
+// TestClusterConcurrentConfigRead 测试并发读取集群配置
+func TestClusterConcurrentConfigRead(t *testing.T) {
+	// 先添加配置
+	for i := 0; i < 20; i++ {
+		configName := fmt.Sprintf("concurrent_cluster_%d", i)
+		option := Option{
+			Address:  []string{fmt.Sprintf("localhost:%d", 7000+i)},
+			PoolSize: 50 + i,
+		}
+		Add(configName, option)
+	}
+
+	// 并发读取配置
+	var wg sync.WaitGroup
+	errors := make(chan error, 20)
+
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+
+			configName := fmt.Sprintf("concurrent_cluster_%d", idx)
+
+			// 验证配置
+			if opt, ok := options[configName]; !ok {
+				errors <- fmt.Errorf("goroutine %d: 配置读取失败", idx)
+			} else if opt.PoolSize != 50+idx {
+				errors <- fmt.Errorf("goroutine %d: PoolSize配置错误，期望%d，实际%d", idx, 50+idx, opt.PoolSize)
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	// 检查错误
+	for err := range errors {
+		t.Error(err)
+	}
+}
+
+// TestClusterEmptyAddressPanic 测试空地址数组引发panic
+func TestClusterEmptyAddressPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("期望空地址数组引发panic但没有发生")
+		}
+	}()
+
+	option := Option{
+		Address: []string{},
+	}
+	Add("test_cluster_empty_addr", option)
+}
+
+// TestClusterConfigNotFoundPanic 测试使用不存在的配置引发panic
+func TestClusterConfigNotFoundPanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("期望使用不存在的配置引发panic但没有发生")
+		}
+	}()
+
+	Cluster("non_existent_cluster_config")
+}
+
+// TestClusterSingleNodeConfig 测试单节点集群配置
+func TestClusterSingleNodeConfig(t *testing.T) {
+	option := Option{
+		Address: []string{"localhost:7000"},
+	}
+	Add("test_cluster_single_node", option)
+
+	opt := options["test_cluster_single_node"]
+	if len(opt.Address) != 1 {
+		t.Errorf("期望1个地址，实际%d个", len(opt.Address))
+	}
+}
+
+// TestClusterWithDB 测试集群配置中的DB字段（集群模式不使用DB）
+func TestClusterWithDB(t *testing.T) {
+	option := Option{
+		Address: []string{"localhost:7000"},
+		DB:      5, // 集群模式会忽略此字段
+	}
+	Add("test_cluster_with_db", option)
+
+	opt := options["test_cluster_with_db"]
+	// 配置会保存DB字段，但实际使用时集群模式会忽略它
+	if opt.DB != 5 {
+		t.Errorf("期望DB为5，实际为%d", opt.DB)
+	}
+}
