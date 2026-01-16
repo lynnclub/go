@@ -30,6 +30,9 @@ func Cluster(name string) *redis.ClusterClient {
 		panic("Option not found " + name)
 	}
 
+	// 默认输出到 stderr，纠正为 stdout
+	redis.SetLogger(newStdoutLogger())
+
 	clusterOptions := &redis.ClusterOptions{
 		Addrs:           option.Address,
 		Password:        option.Password,

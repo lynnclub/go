@@ -120,6 +120,9 @@ func Use(name string) *redis.Client {
 		panic("Option not found " + name)
 	}
 
+	// 默认输出到 stderr，纠正为 stdout
+	redis.SetLogger(newStdoutLogger())
+
 	clientOptions := &redis.Options{
 		Addr:            option.Address[0],
 		DB:              option.DB,

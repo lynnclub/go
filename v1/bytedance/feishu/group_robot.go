@@ -6,7 +6,7 @@ import (
 
 	"github.com/lynnclub/go/v1/encoding/json"
 	"github.com/lynnclub/go/v1/sign"
-	"github.com/parnurzeal/gorequest"
+	"github.com/valyala/fasthttp"
 )
 
 // GroupRobot 飞书群机器人客户端
@@ -25,16 +25,28 @@ func NewGroupRobot(webhook, signKey string) *GroupRobot {
 
 // SendRaw 发送原始参数到飞书API
 func (robot *GroupRobot) SendRaw(params interface{}) (response GroupRobotResponse, err error) {
-	_, body, errs := gorequest.New().Post(robot.Webhook).
-		Set("Content-Type", "application/json").
-		Send(params).
-		Timeout(3 * time.Second).
-		End()
-	if len(errs) > 0 {
-		return response, errs[0]
+	// 序列化请求参数
+	bodyBytes := json.EncodeToByte(params)
+
+	// 创建请求和响应对象
+	req := fasthttp.AcquireRequest()
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseRequest(req)
+	defer fasthttp.ReleaseResponse(resp)
+
+	// 设置请求
+	req.SetRequestURI(robot.Webhook)
+	req.Header.SetMethod(fasthttp.MethodPost)
+	req.Header.SetContentType("application/json")
+	req.SetBody(bodyBytes)
+
+	// 发送请求
+	if err = fasthttp.DoTimeout(req, resp, 3*time.Second); err != nil {
+		return response, err
 	}
 
-	if err = json.Decode(body, &response); err != nil {
+	// 解析响应
+	if err = json.Decode(string(resp.Body()), &response); err != nil {
 		return response, err
 	}
 

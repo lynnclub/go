@@ -30,6 +30,9 @@ func Sentinel(name string) *redis.Client {
 		panic("Option not found " + name)
 	}
 
+	// 默认输出到 stderr，纠正为 stdout
+	redis.SetLogger(newStdoutLogger())
+
 	failoverOptions := &redis.FailoverOptions{
 		MasterName:      option.MasterName,
 		SentinelAddrs:   option.Address,

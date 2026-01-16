@@ -50,6 +50,17 @@ golang、php、java 等语言，语法特性各异、流行开源包多样、面
 
 要求以 master 分支整体发行，标签为三级版本号。package 包版本体现在路径上，不兼容升级时必须创建新版本，业务类的包收录在厂商名下。
 
+### 单元测试
+
+```shell
+# 运行所有测试
+go test ./...
+# 覆盖率
+go test ./... -cover
+# 生成可视化 HTML 报告
+go tool cover -html=coverage.out -o coverage.html
+```
+
 # 详细说明
 
 ## v1/config
