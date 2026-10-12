@@ -8,36 +8,34 @@ import (
 	"github.com/lynnclub/go/v1/algorithm"
 )
 
-// MD5 常规md5，get拼接
-func MD5(params map[string]interface{}, secret string) string {
-	var keys []string
+func buildQueryString(params map[string]interface{}, secret string) string {
+	keys := make([]string, 0, len(params))
 	for key := range params {
 		keys = append(keys, key)
 	}
 
 	sort.Strings(keys)
 
-	var list []string
-	for _, key := range keys {
-		list = append(list, key+"="+fmt.Sprintf("%v", params[key]))
+	var builder strings.Builder
+	for i, key := range keys {
+		if i > 0 {
+			builder.WriteByte('&')
+		}
+		builder.WriteString(key)
+		builder.WriteByte('=')
+		builder.WriteString(fmt.Sprintf("%v", params[key]))
 	}
+	builder.WriteString(secret)
 
-	return algorithm.MD5(strings.Join(list, "&") + secret)
+	return builder.String()
+}
+
+// MD5 常规md5，get拼接
+func MD5(params map[string]interface{}, secret string) string {
+	return algorithm.MD5(buildQueryString(params, secret))
 }
 
 // SHA1 常规sha1，get拼接
 func SHA1(params map[string]interface{}, secret string) string {
-	var keys []string
-	for key := range params {
-		keys = append(keys, key)
-	}
-
-	sort.Strings(keys)
-
-	var list []string
-	for _, key := range keys {
-		list = append(list, key+"="+fmt.Sprintf("%v", params[key]))
-	}
-
-	return algorithm.SHA1(strings.Join(list, "&") + secret)
+	return algorithm.SHA1(buildQueryString(params, secret))
 }
