@@ -20,7 +20,7 @@ func Sentinel(name string) *redis.Client {
 	} else {
 		mutexSentinel.Lock()
 		defer mutexSentinel.Unlock()
-		if instance, ok = pool.Load(name); ok {
+		if instance, ok = poolSentinel.Load(name); ok {
 			return instance.(*redis.Client)
 		}
 	}

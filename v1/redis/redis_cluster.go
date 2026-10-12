@@ -20,7 +20,7 @@ func Cluster(name string) *redis.ClusterClient {
 	} else {
 		mutexCluster.Lock()
 		defer mutexCluster.Unlock()
-		if instance, ok = pool.Load(name); ok {
+		if instance, ok = poolCluster.Load(name); ok {
 			return instance.(*redis.ClusterClient)
 		}
 	}
